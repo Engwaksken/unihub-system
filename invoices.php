@@ -177,6 +177,20 @@ try {
     $invoiceLoadError = $e->getMessage();
 }
 
+$dateFrom = trim((string)($_GET['date_from'] ?? ''));
+$dateTo = trim((string)($_GET['date_to'] ?? ''));
+$page = max(1, (int)($_GET['page'] ?? 1));
+$periodInvoices = array_values(array_filter($invoices, static function (array $invoice) use ($dateFrom, $dateTo): bool {
+    $date = (string)($invoice['issued_date'] ?? '');
+    return (!preg_match('/^\d{4}-\d{2}-\d{2}$/', $dateFrom) || $date >= $dateFrom)
+        && (!preg_match('/^\d{4}-\d{2}-\d{2}$/', $dateTo) || $date <= $dateTo);
+}));
+$totalInvoices = count($periodInvoices);
+$perPage = 20;
+$totalPages = max(1, (int)ceil($totalInvoices / $perPage));
+$page = min($page, $totalPages);
+$invoices = array_slice($periodInvoices, ($page - 1) * $perPage, $perPage);
+
 include 'includes/header.php';
 ?>
 
@@ -428,6 +442,7 @@ include 'includes/header.php';
 <?php endif; ?>
 
 <div class="card">
+    <form class="period-filter" method="get"><label>Issued from <input type="date" name="date_from" value="<?= htmlspecialchars($dateFrom, ENT_QUOTES, 'UTF-8') ?>"></label><label>To <input type="date" name="date_to" value="<?= htmlspecialchars($dateTo, ENT_QUOTES, 'UTF-8') ?>"></label><button class="btn btn-primary btn-sm">Apply</button><a class="btn btn-ghost btn-sm" href="invoices.php">Clear</a></form>
     <div class="invoice-filter-bar">
         <div class="invoice-search-wrap">
             <i class="fas fa-search"></i>
@@ -443,6 +458,7 @@ include 'includes/header.php';
             <option value="cancelled">Cancelled</option>
         </select>
     </div>
+    <nav class="users-pagination" aria-label="Invoice pages"><?php if ($page > 1): ?><a class="btn btn-ghost btn-sm" href="<?= h('invoices.php?' . http_build_query(['date_from'=>$dateFrom,'date_to'=>$dateTo,'page'=>$page-1])) ?>">Previous</a><?php endif; ?><span class="users-page-info">Page <?= $page ?> of <?= $totalPages ?> · <?= $totalInvoices ?> invoices</span><?php if ($page < $totalPages): ?><a class="btn btn-ghost btn-sm" href="<?= h('invoices.php?' . http_build_query(['date_from'=>$dateFrom,'date_to'=>$dateTo,'page'=>$page+1])) ?>">Next</a><?php endif; ?></nav>
 
     <div class="table-wrap">
         <table id="inv-table">

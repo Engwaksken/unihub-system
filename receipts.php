@@ -147,6 +147,20 @@ $receipts = $pdo->query("
     ORDER BY r.created_at DESC, r.id DESC
 ")->fetchAll(PDO::FETCH_ASSOC);
 
+$dateFrom = trim((string)($_GET['date_from'] ?? ''));
+$dateTo = trim((string)($_GET['date_to'] ?? ''));
+$page = max(1, (int)($_GET['page'] ?? 1));
+$periodReceipts = array_values(array_filter($receipts, static function (array $receipt) use ($dateFrom, $dateTo): bool {
+    $date = (string)($receipt['payment_date'] ?? '');
+    return (!preg_match('/^\d{4}-\d{2}-\d{2}$/', $dateFrom) || $date >= $dateFrom)
+        && (!preg_match('/^\d{4}-\d{2}-\d{2}$/', $dateTo) || $date <= $dateTo);
+}));
+$totalReceipts = count($periodReceipts);
+$perPage = 20;
+$totalPages = max(1, (int)ceil($totalReceipts / $perPage));
+$page = min($page, $totalPages);
+$receipts = array_slice($periodReceipts, ($page - 1) * $perPage, $perPage);
+
 include 'includes/header.php';
 ?>
 
@@ -267,6 +281,7 @@ include 'includes/header.php';
 <?php endif; ?>
 
 <div class="card">
+    <form class="period-filter" method="get"><label>Payment date from <input type="date" name="date_from" value="<?= htmlspecialchars($dateFrom, ENT_QUOTES, 'UTF-8') ?>"></label><label>To <input type="date" name="date_to" value="<?= htmlspecialchars($dateTo, ENT_QUOTES, 'UTF-8') ?>"></label><button class="btn btn-primary btn-sm">Apply</button><a class="btn btn-ghost btn-sm" href="receipts.php">Clear</a></form>
     <div class="filter-bar">
         <div style="position:relative;max-width:420px;width:100%">
             <i class="fas fa-search" style="position:absolute;left:12px;top:50%;transform:translateY(-50%);color:var(--text-muted)"></i>
@@ -411,6 +426,7 @@ include 'includes/header.php';
             </tbody>
         </table>
     </div>
+    <nav class="users-pagination" aria-label="Receipt pages"><?php if ($page > 1): ?><a class="btn btn-ghost btn-sm" href="<?= h('receipts.php?' . http_build_query(['date_from'=>$dateFrom,'date_to'=>$dateTo,'page'=>$page-1])) ?>">Previous</a><?php endif; ?><span class="users-page-info">Page <?= $page ?> of <?= $totalPages ?> · <?= $totalReceipts ?> receipts</span><?php if ($page < $totalPages): ?><a class="btn btn-ghost btn-sm" href="<?= h('receipts.php?' . http_build_query(['date_from'=>$dateFrom,'date_to'=>$dateTo,'page'=>$page+1])) ?>">Next</a><?php endif; ?></nav>
 </div>
 
 <div id="signatureModalBackdrop" class="signature-modal-backdrop">

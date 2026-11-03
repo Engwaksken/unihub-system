@@ -7,22 +7,7 @@ $pdo = getDB();
 if (!$pdo instanceof PDO) die('Database connection unavailable.');
 
 // This module owns the log schema so the page works before the first email is sent.
-$pdo->exec("CREATE TABLE IF NOT EXISTS email_logs (
-    id BIGINT UNSIGNED NOT NULL AUTO_INCREMENT PRIMARY KEY,
-    email_type VARCHAR(32) NOT NULL DEFAULT 'other',
-    reference_id BIGINT UNSIGNED NOT NULL DEFAULT 0,
-    recipient_name VARCHAR(255) DEFAULT NULL,
-    recipient_email VARCHAR(255) NOT NULL,
-    subject VARCHAR(500) NOT NULL,
-    status VARCHAR(20) NOT NULL,
-    attachment_path VARCHAR(1024) DEFAULT NULL,
-    sent_at DATETIME DEFAULT NULL,
-    error_message TEXT DEFAULT NULL,
-    created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    INDEX idx_email_logs_created (created_at),
-    INDEX idx_email_logs_status (status),
-    INDEX idx_email_logs_type (email_type)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4");
+ensureEmailLogsSchema($pdo);
 
 if (!function_exists('h')) {
     function h($value): string {
