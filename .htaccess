@@ -4,3 +4,18 @@
 </FilesMatch>
 
 Options -Indexes
+
+# Pretty URLs: /clients resolves internally to clients.php.
+RewriteEngine On
+
+# Canonicalize browser-facing GET/HEAD requests to extensionless page URLs.
+RewriteCond %{REQUEST_METHOD} ^(?:GET|HEAD)$
+RewriteCond %{REQUEST_URI} !/api/ [NC]
+RewriteCond %{THE_REQUEST} \s/+(.+?)\.php(?:[?\s]) [NC]
+RewriteRule ^(.+)\.php$ $1 [R=301,L,NE]
+
+# Resolve extensionless paths to their matching PHP page without changing the URL.
+RewriteCond %{REQUEST_FILENAME} !-d
+RewriteCond %{REQUEST_FILENAME} !-f
+RewriteCond %{REQUEST_FILENAME}.php -f
+RewriteRule ^(.+?)/?$ $1.php [L,QSA]
