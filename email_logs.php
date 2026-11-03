@@ -6,6 +6,24 @@ require_once __DIR__ . '/config/db.php';
 $pdo = getDB();
 if (!$pdo instanceof PDO) die('Database connection unavailable.');
 
+// This module owns the log schema so the page works before the first email is sent.
+$pdo->exec("CREATE TABLE IF NOT EXISTS email_logs (
+    id BIGINT UNSIGNED NOT NULL AUTO_INCREMENT PRIMARY KEY,
+    email_type VARCHAR(32) NOT NULL DEFAULT 'other',
+    reference_id BIGINT UNSIGNED NOT NULL DEFAULT 0,
+    recipient_name VARCHAR(255) DEFAULT NULL,
+    recipient_email VARCHAR(255) NOT NULL,
+    subject VARCHAR(500) NOT NULL,
+    status VARCHAR(20) NOT NULL,
+    attachment_path VARCHAR(1024) DEFAULT NULL,
+    sent_at DATETIME DEFAULT NULL,
+    error_message TEXT DEFAULT NULL,
+    created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    INDEX idx_email_logs_created (created_at),
+    INDEX idx_email_logs_status (status),
+    INDEX idx_email_logs_type (email_type)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4");
+
 if (!function_exists('h')) {
     function h($value): string {
         return htmlspecialchars((string)$value, ENT_QUOTES, 'UTF-8');
@@ -23,8 +41,10 @@ $where = []; $params = [];
 if ($statusFilter !== '') { $where[] = 'status = :status';         $params[':status']     = $statusFilter; }
 if ($typeFilter   !== '') { $where[] = 'email_type = :email_type'; $params[':email_type'] = $typeFilter; }
 if ($search       !== '') {
-    $where[] = '(recipient_email LIKE :s OR recipient_name LIKE :s OR subject LIKE :s OR attachment_path LIKE :s OR error_message LIKE :s)';
-    $params[':s'] = '%' . $search . '%';
+    $where[] = '(recipient_email LIKE :s_email OR recipient_name LIKE :s_name OR subject LIKE :s_subject OR attachment_path LIKE :s_attachment OR error_message LIKE :s_error)';
+    foreach (['email', 'name', 'subject', 'attachment', 'error'] as $field) {
+        $params[':s_' . $field] = '%' . $search . '%';
+    }
 }
 $wsql = $where ? 'WHERE ' . implode(' AND ', $where) : '';
 
@@ -59,15 +79,16 @@ include __DIR__ . '/includes/header.php';
     <a class="btn btn-ghost btn-sm" href="index.php">Back</a>
 </div>
 
-<!-- Stats -->
-<div class="stats-grid logs-stats-grid">
-    <div class="stat-card"><div class="stat-label">Total Logs</div>    <div class="stat-value"><?= (int)($stats['total_logs']   ?? 0) ?></div></div>
-    <div class="stat-card"><div class="stat-label">Sent</div>          <div class="stat-value"><?= (int)($stats['sent_logs']    ?? 0) ?></div></div>
-    <div class="stat-card"><div class="stat-label">Failed</div>        <div class="stat-value"><?= (int)($stats['failed_logs']  ?? 0) ?></div></div>
-    <div class="stat-card"><div class="stat-label">Pending</div>       <div class="stat-value"><?= (int)($stats['pending_logs'] ?? 0) ?></div></div>
-    <div class="stat-card"><div class="stat-label">Invoice Emails</div><div class="stat-value"><?= (int)($stats['invoice_logs'] ?? 0) ?></div></div>
-    <div class="stat-card"><div class="stat-label">Receipt Emails</div><div class="stat-value"><?= (int)($stats['receipt_logs'] ?? 0) ?></div></div>
-</div>
+<nav class="logs-tabs" aria-label="Filter email logs by status">
+    <?php foreach ([
+        '' => ['All', (int)($stats['total_logs'] ?? 0)],
+        'sent' => ['Sent', (int)($stats['sent_logs'] ?? 0)],
+        'failed' => ['Failed', (int)($stats['failed_logs'] ?? 0)],
+        'pending' => ['Pending', (int)($stats['pending_logs'] ?? 0)],
+    ] as $value => [$label, $count]): ?>
+        <a class="logs-tab <?= $statusFilter === $value ? 'active' : '' ?>" href="<?= h('email_logs.php' . buildQuery(['status' => $value, 'page' => 1])) ?>"><?= h($label) ?><span><?= $count ?></span></a>
+    <?php endforeach; ?>
+</nav>
 
 <!-- Filters -->
 <div class="card" style="margin-bottom:20px">
@@ -105,22 +126,16 @@ include __DIR__ . '/includes/header.php';
         <table id="logs-table">
             <thead>
                 <tr>
-                    <th>#</th>
                     <th>Type</th>
                     <th>Recipient</th>
-                    <th>Subject</th>
-                    <th>Status</th>
-                    <th>Reference</th>
-                    <th>Attachment</th>
-                    <th>Sent At</th>
-                    <th>Error</th>
+                    <th>Subject / Details</th>
+                    <th>Status / Sent</th>
                     <th>Actions</th>
                 </tr>
             </thead>
             <tbody>
-            <?php foreach ($rows as $i => $row): ?>
+            <?php foreach ($rows as $row): ?>
             <tr>
-                <td class="users-row-num"><?= $offset + $i + 1 ?></td>
                 <td>
                     <span class="badge <?= $row['email_type']==='invoice' ? 'badge-invoiced' : 'badge-paid' ?>">
                         <?= h($row['email_type']) ?>
@@ -133,6 +148,13 @@ include __DIR__ . '/includes/header.php';
                 <td>
                     <strong><?= h($row['subject']) ?></strong><br>
                     <span class="users-last-login"><?= h($row['created_at']) ?></span>
+                    <?php if (!empty($row['attachment_path']) || !empty($row['error_message'])): ?>
+                    <details class="log-details"><summary>More details</summary>
+                        <span>Reference: <?= h($row['email_type']) ?> #<?= (int)$row['reference_id'] ?></span>
+                        <?php if (!empty($row['attachment_path'])): ?><span>File: <?= h(basename((string)$row['attachment_path'])) ?></span><?php endif; ?>
+                        <?php if (!empty($row['error_message'])): ?><pre class="logs-error"><?= h($row['error_message']) ?></pre><?php endif; ?>
+                    </details>
+                    <?php endif; ?>
                 </td>
                 <td>
                     <span class="badge <?= match($row['status']) {
@@ -143,33 +165,16 @@ include __DIR__ . '/includes/header.php';
                     } ?>">
                         <?= h($row['status']) ?>
                     </span>
-                </td>
-                <td><?= h($row['email_type']) ?> #<?= (int)$row['reference_id'] ?></td>
-                <td>
-                    <span class="users-last-login">
-                        <?= !empty($row['attachment_path']) ? h($row['attachment_path']) : '—' ?>
-                    </span>
-                </td>
-                <td>
-                    <?= $row['sent_at']
-                        ? h($row['sent_at'])
-                        : '<span class="users-never">Not sent</span>' ?>
-                </td>
-                <td>
-                    <?php if (!empty($row['error_message'])): ?>
-                        <pre class="logs-error"><?= h($row['error_message']) ?></pre>
-                    <?php else: ?>
-                        <span class="users-never">—</span>
-                    <?php endif; ?>
+                    <small class="log-sent-at"><?= !empty($row['sent_at']) ? h($row['sent_at']) : 'Not sent' ?></small>
                 </td>
                 <td>
                     <div class="td-actions">
                         <?php if ($row['email_type'] === 'invoice'): ?>
                             <a class="btn btn-ghost btn-sm" href="invoice_view.php?id=<?= (int)$row['reference_id'] ?>">View</a>
-                            <button class="btn btn-primary btn-sm" onclick="resendLog('invoice', <?= (int)$row['id'] ?>)">Resend</button>
+                            <button class="btn btn-primary btn-sm" onclick="resendLog('invoice', <?= (int)$row['reference_id'] ?>)">Resend</button>
                         <?php elseif ($row['email_type'] === 'receipt'): ?>
                             <a class="btn btn-ghost btn-sm" href="receipt_view.php?id=<?= (int)$row['reference_id'] ?>">View</a>
-                            <button class="btn btn-primary btn-sm" onclick="resendLog('receipt', <?= (int)$row['id'] ?>)">Resend</button>
+                            <button class="btn btn-primary btn-sm" onclick="resendLog('receipt', <?= (int)$row['reference_id'] ?>)">Resend</button>
                         <?php else: ?>
                             <span class="users-never">—</span>
                         <?php endif; ?>
@@ -196,12 +201,12 @@ include __DIR__ . '/includes/header.php';
 
 <script>
 async function resendLog(type, logId) {
-    const endpoint = type === 'invoice' ? 'resend_invoice.php' : 'resend_receipt.php';
+    const endpoint = type === 'invoice' ? 'send_invoice.php' : 'send_receipt.php';
     try {
         const res  = await fetch(endpoint, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ log_id: logId })
+            body: JSON.stringify(type === 'invoice' ? { invoice_id: logId } : { receipt_id: logId })
         });
         const data = await res.json();
         if (typeof showToast === 'function') {

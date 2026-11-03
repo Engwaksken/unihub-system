@@ -2188,3 +2188,32 @@ button, .btn, input, select, textarea { max-width: 100%; }
     .menu-toggle { min-width: 42px; min-height: 42px; align-items: center; justify-content: center; border-radius: 9px; }
     .menu-toggle:hover, .menu-toggle:focus-visible { background: var(--surface-alt); }
 }
+
+/* Email activity: compact tabs and fewer, readable table columns. */
+.logs-tabs { display:flex; gap:6px; flex-wrap:wrap; border-bottom:1px solid var(--border); margin:0 0 16px; }
+.logs-tab { display:inline-flex; align-items:center; gap:8px; padding:10px 14px; color:var(--text-muted); text-decoration:none; border-bottom:2px solid transparent; font-weight:600; }
+.logs-tab span { padding:1px 7px; border-radius:999px; background:var(--surface-alt); font-size:.75rem; }
+.logs-tab.active { color:var(--navy); border-color:var(--gold); }
+.log-details { margin-top:6px; font-size:.76rem; color:var(--text-muted); }
+.log-details summary { cursor:pointer; color:var(--navy); }
+.log-details span { display:block; overflow-wrap:anywhere; }
+.log-sent-at { display:block; margin-top:5px; color:var(--text-muted); }
+#logs-table { width:100%; table-layout:fixed; }
+#logs-table th:nth-child(2) { width:21%; }
+#logs-table th:nth-child(3) { width:33%; }
+#logs-table th:nth-child(4) { width:17%; }
+#logs-table th:last-child { width:18%; }
+#logs-table td { overflow-wrap:anywhere; }
+@media(max-width:700px) {
+    #logs-table { min-width:540px; }
+    .logs-filter-bar { align-items:stretch; }
+}
+@media(max-width:560px) {
+    .logs-tabs { gap:0; overflow-x:auto; flex-wrap:nowrap; }
+    .logs-tab { white-space:nowrap; padding:9px 11px; }
+}
+.auth-brand { justify-content:center; text-align:center; flex-direction:column; gap:12px; margin-bottom:24px; }
+.auth-logo { display:block; width:82px; height:82px; object-fit:contain; margin:0 auto; }
+.auth-card { margin:auto; }
+.auth-secondary-link { display:block; text-align:center; margin-top:18px; color:var(--navy); font-size:.88rem; font-weight:600; text-decoration:none; }
+.auth-secondary-link:hover { text-decoration:underline; }

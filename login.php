@@ -123,6 +123,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     <meta charset="UTF-8">
     <title>Login - Unihub Solutions</title>
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="icon" href="assets/img/favicon.png" type="image/png">
 
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
 
@@ -133,10 +134,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
 <div class="login-card">
 
-    <div class="login-card-brand">
-        <div class="brand-logo">
-            <i class="fas fa-building"></i>
-        </div>
+<div class="login-card-brand">
+        <img class="auth-logo" src="assets/img/logo.png" alt="Unihub Solutions">
         <div>
             <span class="brand-name">Unihub Solutions</span>
             <span class="brand-sub">Sign in to your account</span>
@@ -190,6 +189,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             Login
         </button>
     </form>
+    <a class="auth-secondary-link" href="forgot_password.php">Forgot your password?</a>
 
 </div>
 

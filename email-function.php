@@ -181,18 +181,61 @@ if (!function_exists('sendEmailWithAttachment')) {
         string $body,
         string $attachmentPath,
         string $attachmentName = '',
-        string $toName = ''
+        string $toName = '',
+        string $emailType = 'other',
+        int $referenceId = 0
     ): bool {
-        $mail = configureMailer();
-        $mail->addAddress($to, $toName !== '' ? $toName : $to);
-        $mail->Subject = $subject;
-        $mail->Body    = $body;
-        $mail->AltBody = trim(strip_tags(str_replace(['<br>', '<br/>', '<br />'], "\n", $body)));
+        $sent = false;
+        $error = null;
+        try {
+            $mail = configureMailer();
+            $mail->addAddress($to, $toName !== '' ? $toName : $to);
+            $mail->Subject = $subject;
+            $mail->Body    = $body;
+            $mail->AltBody = trim(strip_tags(str_replace(['<br>', '<br/>', '<br />'], "\n", $body)));
 
-        $resolved = ef_resolve_attachment_path($attachmentPath);
-        $mail->addAttachment($resolved, $attachmentName !== '' ? $attachmentName : basename($resolved));
+            $resolved = ef_resolve_attachment_path($attachmentPath);
+            $mail->addAttachment($resolved, $attachmentName !== '' ? $attachmentName : basename($resolved));
+            $sent = $mail->send();
+        } catch (Throwable $e) {
+            $error = $e->getMessage();
+        }
 
-        return $mail->send();
+        try {
+            $pdo = ef_get_pdo();
+            $pdo->exec("CREATE TABLE IF NOT EXISTS email_logs (
+                id BIGINT UNSIGNED NOT NULL AUTO_INCREMENT PRIMARY KEY,
+                email_type VARCHAR(32) NOT NULL DEFAULT 'other',
+                reference_id BIGINT UNSIGNED NOT NULL DEFAULT 0,
+                recipient_name VARCHAR(255) DEFAULT NULL,
+                recipient_email VARCHAR(255) NOT NULL,
+                subject VARCHAR(500) NOT NULL,
+                status VARCHAR(20) NOT NULL,
+                attachment_path VARCHAR(1024) DEFAULT NULL,
+                sent_at DATETIME DEFAULT NULL,
+                error_message TEXT DEFAULT NULL,
+                created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+                INDEX idx_email_logs_created (created_at),
+                INDEX idx_email_logs_status (status),
+                INDEX idx_email_logs_type (email_type)
+            ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4");
+            $log = $pdo->prepare("INSERT INTO email_logs
+                (email_type, reference_id, recipient_name, recipient_email, subject, status, attachment_path, sent_at, error_message)
+                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)");
+            $log->execute([
+                in_array($emailType, ['invoice', 'receipt'], true) ? $emailType : 'other',
+                max(0, $referenceId), $toName ?: null, $to, $subject,
+                $sent ? 'sent' : 'failed', $attachmentPath ?: null,
+                $sent ? date('Y-m-d H:i:s') : null, $error,
+            ]);
+        } catch (Throwable $logError) {
+            error_log('Failed to write email log: ' . $logError->getMessage());
+        }
+
+        if (!$sent && $error !== null) {
+            throw new RuntimeException($error);
+        }
+        return $sent;
     }
 }
 

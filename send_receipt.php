@@ -817,7 +817,10 @@ try {
         $subject,
         $body,
         $pdfPath,
-        basename($pdfPath)
+        basename($pdfPath),
+        $clientName,
+        'receipt',
+        (int)$rcp['id']
     );
 
     if (!$sent) {

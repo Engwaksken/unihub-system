@@ -908,7 +908,10 @@ CSS;
         $subject,
         $body,
         $pdfPath,
-        basename($pdfPath)
+        basename($pdfPath),
+        $clientName,
+        'invoice',
+        (int)$inv['id']
     );
 
     if (!$sent) {
