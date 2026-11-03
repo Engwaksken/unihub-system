@@ -473,8 +473,12 @@ try {
     }
 
     $signatureDataUri = '';
+    $profileSignature = trim((string)($rcp['signature_data'] ?? ''));
+    if (str_starts_with($profileSignature, 'data:image/png;base64,')) {
+        $signatureDataUri = $profileSignature;
+    }
     $signaturePath = trim((string)($rcp['signature_path'] ?? ''));
-    if ($signaturePath !== '') {
+    if ($signatureDataUri === '' && $signaturePath !== '') {
         $localSignatureFile = __DIR__ . '/' . ltrim($signaturePath, '/');
         if (is_file($localSignatureFile)) {
             $sigExt = strtolower((string)pathinfo($localSignatureFile, PATHINFO_EXTENSION));

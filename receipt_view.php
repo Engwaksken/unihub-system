@@ -77,6 +77,11 @@ $signedAt       = trim((string)($rcp['signed_at']       ?? ''));
 
 $signatureExists = false;
 $signatureUrl    = '';
+$signatureData = trim((string)($rcp['signature_data'] ?? ''));
+if (str_starts_with($signatureData, 'data:image/png;base64,')) {
+    $signatureExists = true;
+    $signatureUrl = $signatureData;
+}
 if ($signaturePath !== '') {
     $localFile = __DIR__ . '/' . ltrim($signaturePath, '/');
     if (is_file($localFile)) {
@@ -265,7 +270,7 @@ $paymentMethod = ucwords(str_replace('_', ' ', (string)($rcp['payment_method'] ?
             <div class="uh-stamp-svg-wrap">
                 <!--
                     Inline round seal extracted from unihub_stamp.svg
-                    cx=297.64 cy=168 r=120  ?  scaled to 150×150 via viewBox
+                    cx=297.64 cy=168 r=120  ?  scaled to 150ï¿½150 via viewBox
                 -->
                 <svg xmlns="http://www.w3.org/2000/svg" viewBox="147 48 302 242" width="150" height="150">
                     <defs>

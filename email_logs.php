@@ -170,11 +170,11 @@ include __DIR__ . '/includes/header.php';
                 <td>
                     <div class="td-actions">
                         <?php if ($row['email_type'] === 'invoice'): ?>
-                            <a class="btn btn-ghost btn-sm" href="invoice_view.php?id=<?= (int)$row['reference_id'] ?>">View</a>
-                            <button class="btn btn-primary btn-sm" onclick="resendLog('invoice', <?= (int)$row['reference_id'] ?>)">Resend</button>
+                            <a class="btn btn-ghost btn-sm" title="View invoice" aria-label="View invoice" href="invoice_view.php?id=<?= (int)$row['reference_id'] ?>"><i class="fas fa-eye"></i></a>
+                            <button class="btn btn-primary btn-sm" title="Resend email" aria-label="Resend email" onclick="resendLog('invoice', <?= (int)$row['reference_id'] ?>)"><i class="fas fa-paper-plane"></i></button>
                         <?php elseif ($row['email_type'] === 'receipt'): ?>
-                            <a class="btn btn-ghost btn-sm" href="receipt_view.php?id=<?= (int)$row['reference_id'] ?>">View</a>
-                            <button class="btn btn-primary btn-sm" onclick="resendLog('receipt', <?= (int)$row['reference_id'] ?>)">Resend</button>
+                            <a class="btn btn-ghost btn-sm" title="View receipt" aria-label="View receipt" href="receipt_view.php?id=<?= (int)$row['reference_id'] ?>"><i class="fas fa-eye"></i></a>
+                            <button class="btn btn-primary btn-sm" title="Resend email" aria-label="Resend email" onclick="resendLog('receipt', <?= (int)$row['reference_id'] ?>)"><i class="fas fa-paper-plane"></i></button>
                         <?php else: ?>
                             <span class="users-never">—</span>
                         <?php endif; ?>

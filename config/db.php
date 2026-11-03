@@ -81,6 +81,20 @@ function getSettings(): array
     return $cfg;
 }
 
+function ensureUserSignatureProfile(PDO $pdo): void
+{
+    foreach ([
+        'authorized_name' => 'VARCHAR(150) NULL',
+        'profile_signature_data' => 'LONGTEXT NULL',
+    ] as $column => $definition) {
+        $check = $pdo->prepare('SHOW COLUMNS FROM users LIKE ?');
+        $check->execute([$column]);
+        if (!$check->fetch()) {
+            $pdo->exec("ALTER TABLE users ADD COLUMN `{$column}` {$definition}");
+        }
+    }
+}
+
 function nextNumber(string $table, string $col, string $prefix, int $digits = 5): string
 {
     // Identifiers cannot be parameter-bound; only permit known SQL identifier syntax.

@@ -818,8 +818,10 @@ CSS;
 
             <div class="uh-signature">
                 <div class="uh-sig-box">
-                    <div class="uh-sig-space"></div>
-                    <div class="uh-sig-line">Signature: ................................</div>
+                    <?php if (!empty($inv['signature_data']) && str_starts_with((string)$inv['signature_data'], 'data:image/png;base64,')): ?>
+                        <img src="<?= h($inv['signature_data']) ?>" alt="Authorized signature" style="max-width:180px;max-height:60px;object-fit:contain">
+                    <?php else: ?><div class="uh-sig-space"></div><?php endif; ?>
+                    <div class="uh-sig-line"><?= h($inv['authorized_name'] ?: 'Authorized Signature') ?></div>
                     <div class="uh-sig-for">For: <?= h($companyName) ?></div>
                 </div>
             </div>

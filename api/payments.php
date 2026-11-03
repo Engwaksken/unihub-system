@@ -38,6 +38,7 @@ try {
     }
 
     $pdo = getDB();
+    ensureUserSignatureProfile($pdo);
     $cfg = getSettings();
 
     $invoiceId     = (int)($data['invoice_id'] ?? 0);
@@ -149,8 +150,12 @@ try {
             amount_paid,
             payment_method,
             reference,
-            notes
-        ) VALUES (?, ?, ?, ?, ?, ?, ?)
+            notes,
+            authorized_name,
+            signature_type,
+            signature_data,
+            signed_at
+        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, 'draw', ?, CASE WHEN ? IS NULL OR ? = '' THEN NULL ELSE NOW() END)
     ");
     $insert->execute([
         $receiptNumber,
@@ -159,7 +164,11 @@ try {
         $amountPaid,
         $paymentMethod,
         $reference,
-        $notes
+        $notes,
+        $signatory['authorized_name'] ?? null,
+        $signatory['profile_signature_data'] ?? null,
+        $signatory['profile_signature_data'] ?? null,
+        $signatory['profile_signature_data'] ?? null
     ]);
 
     $receiptId = (int)$pdo->lastInsertId();

@@ -4,6 +4,12 @@ require_once 'config/db.php';
 $pageTitle = 'Quotations';
 $pdo = getDB();
 $cfg = getSettings();
+ensureUserSignatureProfile($pdo);
+foreach (['authorized_name' => 'VARCHAR(150) NULL', 'signature_data' => 'LONGTEXT NULL'] as $sigColumn => $sigDefinition) {
+    $columnCheck = $pdo->prepare('SHOW COLUMNS FROM quotations LIKE ?');
+    $columnCheck->execute([$sigColumn]);
+    if (!$columnCheck->fetch()) $pdo->exec("ALTER TABLE quotations ADD COLUMN `{$sigColumn}` {$sigDefinition}");
+}
 
 if (!function_exists('h')) {
     function h($v): string { return htmlspecialchars((string)$v, ENT_QUOTES, 'UTF-8'); }
@@ -83,10 +89,13 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             if (!$items) throw new Exception('Please add valid quotation items.');
             $total = max(0, $subtotal + $taxTotal - $discountAmount);
 
+            $profileStmt = $pdo->prepare('SELECT authorized_name, profile_signature_data FROM users WHERE id=? LIMIT 1');
+            $profileStmt->execute([(int)($_SESSION['user_id'] ?? 0)]);
+            $signatory = $profileStmt->fetch(PDO::FETCH_ASSOC) ?: [];
             $pdo->beginTransaction();
             $quoteNumber = nextQuoteNumber($pdo);
-            $stmt = $pdo->prepare("INSERT INTO quotations (quote_number, client_id, quote_date, valid_until, subtotal, tax_total, discount_amount, total, status, notes, terms) VALUES (?, ?, ?, ?, ?, ?, ?, ?, 'draft', ?, ?)");
-            $stmt->execute([$quoteNumber, $clientId, $quoteDate, $validUntil, $subtotal, $taxTotal, $discountAmount, $total, $notes, $terms]);
+            $stmt = $pdo->prepare("INSERT INTO quotations (quote_number, client_id, quote_date, valid_until, subtotal, tax_total, discount_amount, total, status, notes, terms, authorized_name, signature_data) VALUES (?, ?, ?, ?, ?, ?, ?, ?, 'draft', ?, ?, ?, ?)");
+            $stmt->execute([$quoteNumber, $clientId, $quoteDate, $validUntil, $subtotal, $taxTotal, $discountAmount, $total, $notes, $terms, $signatory['authorized_name'] ?? null, $signatory['profile_signature_data'] ?? null]);
             $quoteId = (int)$pdo->lastInsertId();
 
             $itemStmt = $pdo->prepare("INSERT INTO quotation_items (quotation_id, service_id, description, quantity, unit, unit_price, tax_rate, line_total) VALUES (?, ?, ?, ?, ?, ?, ?, ?)");
@@ -102,6 +111,18 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             if ($quoteId <= 0 || !in_array($status, $allowed, true)) throw new Exception('Invalid quotation status.');
             $stmt = $pdo->prepare('UPDATE quotations SET status = ?, updated_at = NOW() WHERE id = ?');
             $stmt->execute([$status, $quoteId]);
+            header('Location: quotations.php?view=' . $quoteId . '&updated=1'); exit;
+        }
+
+        if ($action === 'update_quote_signature') {
+            $quoteId = (int)($_POST['quote_id'] ?? 0);
+            $authorizedName = trim((string)($_POST['authorized_name'] ?? ''));
+            if ($quoteId <= 0 || $authorizedName === '') throw new Exception('Authorized name is required.');
+            $profileStmt = $pdo->prepare('SELECT profile_signature_data FROM users WHERE id=? LIMIT 1');
+            $profileStmt->execute([(int)($_SESSION['user_id'] ?? 0)]);
+            $profileSignature = (string)($profileStmt->fetchColumn() ?: '');
+            $upd = $pdo->prepare('UPDATE quotations SET authorized_name=?, signature_data=? WHERE id=?');
+            $upd->execute([$authorizedName, $profileSignature ?: null, $quoteId]);
             header('Location: quotations.php?view=' . $quoteId . '&updated=1'); exit;
         }
 
@@ -163,6 +184,12 @@ include 'includes/header.php';
         </select>
         <button class="btn btn-primary" type="submit">Update Status</button>
     </form>
+    <form method="post" class="quote-status-form">
+        <input type="hidden" name="action" value="update_quote_signature">
+        <input type="hidden" name="quote_id" value="<?= (int)$quote['id'] ?>">
+        <input type="text" name="authorized_name" value="<?= h($quote['authorized_name'] ?? '') ?>" aria-label="Authorized name" required>
+        <button class="btn btn-outline" type="submit" title="Update from profile signature">Update Signatory</button>
+    </form>
     <form method="post" onsubmit="return confirm('Delete this quotation?')">
         <input type="hidden" name="action" value="delete_quote">
         <input type="hidden" name="quote_id" value="<?= (int)$quote['id'] ?>">
@@ -185,7 +212,7 @@ include 'includes/header.php';
     <div class="quote-totals"><div class="quote-total-row"><span>Subtotal</span><span><?= moneyQ($quote['subtotal'], $cfg['currency_symbol'] ?? 'UGX ') ?></span></div><div class="quote-total-row"><span>Tax</span><span><?= moneyQ($quote['tax_total'], $cfg['currency_symbol'] ?? 'UGX ') ?></span></div><?php if ((float)$quote['discount_amount'] > 0): ?><div class="quote-total-row"><span>Discount</span><span>- <?= moneyQ($quote['discount_amount'], $cfg['currency_symbol'] ?? 'UGX ') ?></span></div><?php endif; ?><div class="quote-total-row grand"><span>Total Quote</span><span><?= moneyQ($quote['total'], $cfg['currency_symbol'] ?? 'UGX ') ?></span></div></div>
     <?php if (!empty($quote['notes'])): ?><div class="quote-box quote-notes-box"><div class="quote-box-title">Notes</div><?= nl2br(h($quote['notes'])) ?></div><?php endif; ?>
     <?php if (!empty($quote['terms'])): ?><div class="quote-box quote-terms-box"><div class="quote-box-title">Terms & Conditions</div><?= nl2br(h($quote['terms'])) ?></div><?php endif; ?>
-    <div class="quote-signature-wrap"><div class="quote-signature-box"><div class="quote-signature-line">Authorized Signature</div><div class="quote-signature-for">For: <?= h($cfg['company_name'] ?? 'Company') ?></div></div></div>
+    <div class="quote-signature-wrap"><div class="quote-signature-box"><?php if (!empty($quote['signature_data'])): ?><img class="quote-saved-signature" src="<?= h($quote['signature_data']) ?>" alt="Authorized signature"><?php endif; ?><div class="quote-signature-line"><?= h($quote['authorized_name'] ?? 'Authorized Signature') ?></div><div class="quote-signature-for">For: <?= h($cfg['company_name'] ?? 'Company') ?></div></div></div>
 </div>
 <?php else: ?>
 <div class="quote-card no-print"><div class="quote-title">All Quotations</div><div class="table-wrap"><table class="quote-table"><thead><tr><th>Quote #</th><th>Client</th><th>Email</th><th>Quote Date</th><th>Valid Until</th><th>Total</th><th>Status</th><th class="quote-actions-col">Actions</th></tr></thead><tbody>

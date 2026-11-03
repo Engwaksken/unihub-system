@@ -164,6 +164,10 @@ try {
             </a>
         </li>
 
+        <li class="nav-item <?= $currentPage === 'profile' ? 'active' : '' ?>">
+            <a href="profile.php"><i class="fas fa-id-badge"></i> My Profile</a>
+        </li>
+
         <li class="nav-item <?= $currentPage === 'settings' ? 'active' : '' ?>">
             <a href="settings.php">
                 <i class="fas fa-sliders-h"></i> Settings

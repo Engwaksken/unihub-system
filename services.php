@@ -85,8 +85,8 @@ include 'includes/header.php';
                 </td>
                 <td>
                     <div class="td-actions">
-                        <button class="btn btn-ghost btn-sm" onclick="openSvcForm(<?= $s['id'] ?>)">Edit</button>
-                        <button class="btn btn-danger btn-sm" onclick="deleteSvc(<?= $s['id'] ?>)">Del</button>
+                        <button class="btn btn-ghost btn-sm" title="Edit service" aria-label="Edit service" onclick="openSvcForm(<?= $s['id'] ?>)"><i class="fas fa-pen"></i></button>
+                        <button class="btn btn-danger btn-sm" title="Delete service" aria-label="Delete service" onclick="deleteSvc(<?= $s['id'] ?>)"><i class="fas fa-trash"></i></button>
                     </div>
                 </td>
             </tr>

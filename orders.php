@@ -234,14 +234,7 @@ include 'includes/header.php';
         <table id="orders-table">
             <thead>
             <tr>
-                <th><i class="fas fa-hashtag"></i> Order #</th>
-                <th><i class="fas fa-user"></i> Client</th>
-                <th><i class="fas fa-calendar"></i> Date</th>
-                <th><i class="fas fa-calendar-check"></i> Due</th>
-                <th><i class="fas fa-list"></i> Items</th>
-                <th><i class="fas fa-info-circle"></i> Status</th>
-                <th><i class="fas fa-file-invoice"></i> Invoice</th>
-                <th><i class="fas fa-cogs"></i> Actions</th>
+                <th>Order #</th><th>Client</th><th>Date</th><th>Due</th><th>Items</th><th>Status</th><th>Invoice</th><th>Actions</th>
             </tr>
             </thead>
 

@@ -597,14 +597,14 @@ include 'includes/header.php';
 
                         <td>
                             <div class="invoice-actions">
-                                <a href="invoice_view.php?id=<?= $invoiceId ?>" class="btn btn-ghost btn-sm">
+                                <a href="invoice_view.php?id=<?= $invoiceId ?>" class="btn btn-ghost btn-sm" title="View invoice" aria-label="View invoice">
                                     <i class="fas fa-eye"></i>
-                                    View
                                 </a>
 
                                 <button
                                     type="button"
                                     class="btn btn-outline btn-sm open-invoice-signature-modal"
+                                    title="<?= $isSigned ? 'Update signature' : 'Add signature' ?>" aria-label="<?= $isSigned ? 'Update signature' : 'Add signature' ?>"
                                     data-id="<?= $invoiceId ?>"
                                     data-number="<?= htmlspecialchars($invoiceNumber) ?>"
                                     data-client="<?= htmlspecialchars($inv['client_name'] ?? '') ?>"
@@ -613,18 +613,15 @@ include 'includes/header.php';
                                     data-signature-path="<?= htmlspecialchars((string)($inv['signature_path'] ?? '')) ?>"
                                 >
                                     <i class="fas fa-signature"></i>
-                                    <?= $isSigned ? 'Update Signature' : 'Add Signature' ?>
                                 </button>
 
-                                <button type="button" class="btn btn-outline btn-sm" onclick="sendInvoiceEmail(<?= $invoiceId ?>, this)">
+                                <button type="button" class="btn btn-outline btn-sm" title="Send email" aria-label="Send email" onclick="sendInvoiceEmail(<?= $invoiceId ?>, this)">
                                     <i class="fas fa-paper-plane"></i>
-                                    Send Email
                                 </button>
 
                                 <?php if (in_array($status, ['unpaid', 'partial', 'overdue'], true)): ?>
-                                    <button type="button" class="btn btn-danger btn-sm" onclick="cancelInvoice(<?= $invoiceId ?>)">
+                                    <button type="button" class="btn btn-danger btn-sm" title="Cancel invoice" aria-label="Cancel invoice" onclick="cancelInvoice(<?= $invoiceId ?>)">
                                         <i class="fas fa-times-circle"></i>
-                                        Cancel
                                     </button>
                                 <?php endif; ?>
                             </div>

@@ -377,8 +377,12 @@ $canVoid   = $status !== 'paid' && $status !== 'void';
     <!-- ── SIGNATURE ── -->
     <div class="uh-signature">
         <div class="uh-sig-box">
-            <div class="uh-sig-spacer"></div>
-            <div class="uh-sig-line">Signature: ................................</div>
+            <?php if (!empty($inv['signature_data']) && str_starts_with((string)$inv['signature_data'], 'data:image/png;base64,')): ?>
+                <img src="<?= h($inv['signature_data']) ?>" alt="Authorized signature" style="max-width:180px;max-height:60px;object-fit:contain">
+            <?php elseif (!empty($inv['signature_path']) && is_file(__DIR__ . '/' . ltrim((string)$inv['signature_path'], '/'))): ?>
+                <img src="<?= h($inv['signature_path']) ?>" alt="Authorized signature" style="max-width:180px;max-height:60px;object-fit:contain">
+            <?php else: ?><div class="uh-sig-spacer"></div><?php endif; ?>
+            <div class="uh-sig-line"><?= h($inv['authorized_name'] ?: 'Authorized Signature') ?></div>
             <div class="uh-sig-for">For: <?= h($companyName) ?></div>
         </div>
     </div>

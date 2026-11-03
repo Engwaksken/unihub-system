@@ -111,13 +111,7 @@ include 'includes/header.php';
         <table id="clients-table">
             <thead>
                 <tr>
-                    <th><i class="fas fa-hashtag"></i></th>
-                    <th><i class="fas fa-user"></i> Name</th>
-                    <th><i class="fas fa-building"></i> Company</th>
-                    <th><i class="fas fa-envelope"></i> Email</th>
-                    <th><i class="fas fa-phone"></i> Phone</th>
-                    <th><i class="fas fa-shopping-cart"></i> Orders</th>
-                    <th><i class="fas fa-cogs"></i> Actions</th>
+                    <th>#</th><th>Name</th><th>Company</th><th>Email</th><th>Phone</th><th>Orders</th><th>Actions</th>
                 </tr>
             </thead>
 

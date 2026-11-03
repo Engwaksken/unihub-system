@@ -282,14 +282,22 @@ class Order
 
         $dueDate = $order['due_date'] ?: date('Y-m-d', strtotime('+' . $terms . ' days'));
 
+        ensureUserSignatureProfile($this->pdo);
+        $signatory = ['authorized_name' => null, 'profile_signature_data' => null];
+        if (!empty($_SESSION['user_id'])) {
+            $profileStmt = $this->pdo->prepare('SELECT authorized_name, profile_signature_data FROM users WHERE id=? LIMIT 1');
+            $profileStmt->execute([(int)$_SESSION['user_id']]);
+            $signatory = $profileStmt->fetch(PDO::FETCH_ASSOC) ?: $signatory;
+        }
+
         $this->pdo->beginTransaction();
 
         try {
             $stmt = $this->pdo->prepare("
                 INSERT INTO invoices 
-                    (invoice_number, order_id, issued_date, due_date, subtotal, tax_total, discount_amount, total, status)
+                    (invoice_number, order_id, issued_date, due_date, subtotal, tax_total, discount_amount, total, status, authorized_name, signature_type, signature_data, signed_at)
                 VALUES 
-                    (?, ?, CURDATE(), ?, ?, ?, ?, ?, 'unpaid')
+                    (?, ?, CURDATE(), ?, ?, ?, ?, ?, 'unpaid', ?, 'draw', ?, CASE WHEN ? IS NULL OR ? = '' THEN NULL ELSE NOW() END)
             ");
 
             $stmt->execute([
@@ -299,7 +307,11 @@ class Order
                 $subtotal,
                 $taxTotal,
                 $discount,
-                $total
+                $total,
+                $signatory['authorized_name'] ?? null,
+                $signatory['profile_signature_data'] ?? null,
+                $signatory['profile_signature_data'] ?? null,
+                $signatory['profile_signature_data'] ?? null
             ]);
 
             $invoiceId = (int)$this->pdo->lastInsertId();

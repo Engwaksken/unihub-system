@@ -2204,6 +2204,14 @@ button, .btn, input, select, textarea { max-width: 100%; }
 #logs-table th:nth-child(4) { width:17%; }
 #logs-table th:last-child { width:18%; }
 #logs-table td { overflow-wrap:anywhere; }
+.td-actions .btn, .quote-row-actions .btn { font-size:0; min-width:34px; justify-content:center; padding:8px; }
+.td-actions .btn i, .quote-row-actions .btn i, .invoice-actions .btn i { font-size:.9rem; }
+.invoice-actions .btn { font-size:0; min-width:34px; justify-content:center; padding:8px; }
+.quote-saved-signature { display:block; width:180px; height:60px; object-fit:contain; object-position:left center; margin-bottom:4px; }
+.profile-hint, .profile-identity { color:var(--text-muted); margin-bottom:14px; }
+.profile-signature-wrap { max-width:720px; width:100%; border:1px dashed var(--border); border-radius:var(--radius-sm); background:#fff; overflow:hidden; touch-action:none; margin:8px 0 12px; }
+.profile-signature-wrap canvas { display:block; width:100%; height:auto; min-height:110px; }
+.profile-actions { display:flex; gap:10px; flex-wrap:wrap; justify-content:flex-end; }
 @media(max-width:700px) {
     #logs-table { min-width:540px; }
     .logs-filter-bar { align-items:stretch; }

@@ -380,6 +380,7 @@ include 'includes/header.php';
                             <button
                                 type="button"
                                 class="btn btn-primary btn-sm open-signature-modal"
+                                title="<?= $isSigned ? 'Update signature' : 'Add signature' ?>" aria-label="<?= $isSigned ? 'Update signature' : 'Add signature' ?>"
                                 data-id="<?= (int)$r['id'] ?>"
                                 data-number="<?= htmlspecialchars($r['receipt_number']) ?>"
                                 data-client="<?= htmlspecialchars($r['client_name']) ?>"
@@ -388,12 +389,10 @@ include 'includes/header.php';
                                 data-signature-path="<?= htmlspecialchars((string)($r['signature_path'] ?? '')) ?>"
                             >
                                 <i class="fas fa-signature"></i>
-                                <?= $isSigned ? 'Update Signature' : 'Add Signature' ?>
                             </button>
 
-                            <button type="button" class="btn btn-outline btn-sm" onclick="sendReceiptEmail(<?= (int)$r['id'] ?>, this)">
+                            <button type="button" class="btn btn-outline btn-sm" title="Send email" aria-label="Send email" onclick="sendReceiptEmail(<?= (int)$r['id'] ?>, this)">
                                 <i class="fas fa-paper-plane"></i>
-                                Send Email
                             </button>
                         </div>
                     </td>

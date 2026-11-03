@@ -319,18 +319,18 @@ include __DIR__ . '/includes/header.php';
                 <td>
                     <div class="td-actions">
                         <?php if ($editable): ?>
-                            <button class="btn btn-ghost btn-sm"
-                                    onclick="openUserForm(<?= $u['id'] ?>)">Edit</button>
+                            <button class="btn btn-ghost btn-sm" title="Edit user" aria-label="Edit user"
+                                    onclick="openUserForm(<?= $u['id'] ?>)"><i class="fas fa-pen"></i></button>
                             <?php if ((int)$u['id'] !== (int)$authUser['id']): ?>
-                                <button class="btn btn-ghost btn-sm"
+                                <button class="btn btn-ghost btn-sm" title="<?= $u['status']==='active'?'Deactivate':'Activate' ?> user" aria-label="<?= $u['status']==='active'?'Deactivate':'Activate' ?> user"
                                         onclick="toggleUserStatus(<?= $u['id'] ?>, this)">
-                                    <?= $u['status']==='active'?'Deactivate':'Activate' ?>
+                                    <i class="fas <?= $u['status']==='active'?'fa-user-slash':'fa-user-check' ?>"></i>
                                 </button>
                             <?php endif; ?>
                         <?php endif; ?>
                         <?php if ($canDelete && (int)$u['id'] !== (int)$authUser['id']): ?>
-                            <button class="btn btn-danger btn-sm"
-                                    onclick="deleteUser(<?= $u['id'] ?>, '<?= h(addslashes($u['name'])) ?>')">Del</button>
+                            <button class="btn btn-danger btn-sm" title="Delete user" aria-label="Delete user"
+                                    onclick="deleteUser(<?= $u['id'] ?>, '<?= h(addslashes($u['name'])) ?>')"><i class="fas fa-trash"></i></button>
                         <?php endif; ?>
                     </div>
                 </td>
