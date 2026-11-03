@@ -36,8 +36,7 @@ $pdo->exec("CREATE TABLE IF NOT EXISTS quotation_items (
     INDEX idx_quotation_items_parent (quotation_id)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4");
 foreach (['authorized_name' => 'VARCHAR(150) NULL', 'signature_data' => 'LONGTEXT NULL'] as $sigColumn => $sigDefinition) {
-    $columnCheck = $pdo->prepare('SHOW COLUMNS FROM quotations LIKE ?');
-    $columnCheck->execute([$sigColumn]);
+    $columnCheck = $pdo->query('SHOW COLUMNS FROM quotations LIKE ' . $pdo->quote($sigColumn));
     if (!$columnCheck->fetch()) $pdo->exec("ALTER TABLE quotations ADD COLUMN `{$sigColumn}` {$sigDefinition}");
 }
 

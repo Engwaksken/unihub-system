@@ -374,16 +374,15 @@ class Order
 
     private function tableExists(string $table): bool
     {
-        $stmt = $this->pdo->prepare("SHOW TABLES LIKE ?");
-        $stmt->execute([$table]);
+        $stmt = $this->pdo->query('SHOW TABLES LIKE ' . $this->pdo->quote($table));
 
         return (bool)$stmt->fetchColumn();
     }
 
     private function columnExists(string $table, string $column): bool
     {
-        $stmt = $this->pdo->prepare("SHOW COLUMNS FROM `$table` LIKE ?");
-        $stmt->execute([$column]);
+        if (!preg_match('/^[A-Za-z_][A-Za-z0-9_]*$/', $table) || !preg_match('/^[A-Za-z_][A-Za-z0-9_]*$/', $column)) return false;
+        $stmt = $this->pdo->query("SHOW COLUMNS FROM `$table` LIKE " . $this->pdo->quote($column));
 
         return (bool)$stmt->fetchColumn();
     }

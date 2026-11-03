@@ -87,8 +87,7 @@ function ensureUserSignatureProfile(PDO $pdo): void
         'authorized_name' => 'VARCHAR(150) NULL',
         'profile_signature_data' => 'LONGTEXT NULL',
     ] as $column => $definition) {
-        $check = $pdo->prepare('SHOW COLUMNS FROM users LIKE ?');
-        $check->execute([$column]);
+        $check = $pdo->query('SHOW COLUMNS FROM users LIKE ' . $pdo->quote($column));
         if (!$check->fetch()) {
             $pdo->exec("ALTER TABLE users ADD COLUMN `{$column}` {$definition}");
         }
@@ -125,8 +124,7 @@ function ensureEmailLogsSchema(PDO $pdo): void
         'error_message' => 'TEXT DEFAULT NULL',
         'created_at' => 'TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP',
     ] as $column => $definition) {
-        $check = $pdo->prepare('SHOW COLUMNS FROM email_logs LIKE ?');
-        $check->execute([$column]);
+        $check = $pdo->query('SHOW COLUMNS FROM email_logs LIKE ' . $pdo->quote($column));
         if (!$check->fetch()) $pdo->exec("ALTER TABLE email_logs ADD COLUMN `{$column}` {$definition}");
     }
 }
