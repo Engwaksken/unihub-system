@@ -1,0 +1,8 @@
+.env
+.env.*
+!.env.example
+*.log
+error_log
+/vendor/
+/uploads/
+/assets/img/uploads/
