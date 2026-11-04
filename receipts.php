@@ -320,7 +320,7 @@ include 'includes/header.php';
 
 <div class="card">
     <form class="period-filter" method="get"><label>Payment date from <input type="date" name="date_from" value="<?= htmlspecialchars($dateFrom, ENT_QUOTES, 'UTF-8') ?>"></label><label>To <input type="date" name="date_to" value="<?= htmlspecialchars($dateTo, ENT_QUOTES, 'UTF-8') ?>"></label><button class="btn btn-primary btn-sm">Apply</button><a class="btn btn-ghost btn-sm" href="receipts.php">Clear</a></form>
-    <div class="bulk-actions" style="padding:10px 16px"><button class="btn btn-danger btn-sm" type="submit" form="bulkDeleteReceipts" onclick="return confirm('Permanently delete the selected receipts and recalculate related invoice balances?')"><i class="fas fa-trash"></i> Delete selected</button></div>
+    <div class="bulk-actions" style="padding:10px 16px"><button class="btn btn-danger btn-sm" type="submit" form="bulkDeleteReceipts"><i class="fas fa-trash"></i> Delete selected</button></div>
     <form method="post" id="bulkDeleteReceipts"><input type="hidden" name="action" value="bulk_delete_receipts"></form>
     <div class="filter-bar">
         <div style="position:relative;max-width:420px;width:100%">
@@ -570,12 +570,12 @@ async function sendReceiptEmail(receiptId, btn) {
         }
 
         if (data.success) {
-            alert(data.message || 'Receipt email sent successfully.');
+            showToast(data.message || 'Receipt email sent successfully.');
         } else {
-            alert(data.error || data.message || 'Failed to send receipt email.');
+            showToast(data.error || data.message || 'Failed to send receipt email.', 'error');
         }
     } catch (e) {
-        alert(e.message || 'Network error while sending receipt email.');
+        showToast(e.message || 'Network error while sending receipt email.', 'error');
     } finally {
         btn.disabled = false;
         btn.innerHTML = original;
@@ -801,26 +801,27 @@ document.addEventListener('DOMContentLoaded', function () {
         if (signatureTypeInput.value === 'draw') {
             if (!hasSignature) {
                 e.preventDefault();
-                alert('Please draw a signature before saving.');
+                showToast('Please draw a signature before saving.', 'error');
                 return;
             }
 
             signatureDataInput.value = canvas.toDataURL('image/png');
             if (!signatureDataInput.value) {
                 e.preventDefault();
-                alert('Failed to capture signature. Please draw again.');
+                showToast('Failed to capture signature. Please draw again.', 'error');
                 return;
             }
         } else {
             if (!signatureFileInput.files.length && !existingSignaturePathInput.value) {
                 e.preventDefault();
-                alert('Please upload a signature image before saving.');
+                showToast('Please upload a signature image before saving.', 'error');
                 return;
             }
         }
     });
 });
 document.getElementById('select-all-receipts')?.addEventListener('change',e=>document.querySelectorAll('.receipt-bulk-select').forEach(box=>box.checked=e.target.checked));
+document.getElementById('bulkDeleteReceipts')?.addEventListener('submit',async e=>{e.preventDefault();if(!document.querySelector('.receipt-bulk-select:checked'))return showToast('Select at least one receipt.','error');if(!await confirmModal('Permanently delete the selected receipts and recalculate related invoice balances?',{title:'Delete receipts'}))return;e.currentTarget.submit();});
 </script>
 
 <?php include 'includes/footer.php'; ?>

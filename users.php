@@ -482,7 +482,7 @@ async function toggleUserStatus(id, btn) {
 
 /* -- delete ------------------------------------------------ */
 async function deleteUser(id, name) {
-    if (!confirm(`Delete user "${name}"? This cannot be undone.`)) return;
+    if (!await confirmModal(`Delete user "${name}"? This cannot be undone.`, {title:'Delete user'})) return;
     const res = await api('users.php', {
         method: 'POST',
         body: JSON.stringify({ action:'delete', id })

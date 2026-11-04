@@ -123,7 +123,7 @@ include 'includes/header.php';
 <script>
 document.getElementById('svc-search')?.addEventListener('input',e=>{const q=e.target.value.toLowerCase();document.querySelectorAll('#svc-table tbody tr').forEach(row=>row.hidden=!row.textContent.toLowerCase().includes(q));});
 document.getElementById('select-all-services')?.addEventListener('change',e=>document.querySelectorAll('.service-bulk-select').forEach(box=>box.checked=e.target.checked));
-document.getElementById('delete-selected-services')?.addEventListener('click',async()=>{const ids=[...document.querySelectorAll('.service-bulk-select:checked')].map(box=>Number(box.value));if(!ids.length)return alert('Select at least one service.');if(!confirm(`Delete ${ids.length} selected service(s)? Services used in existing documents cannot be deleted.`))return;try{const res=await fetch('services.php',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({action:'bulk_delete',ids})});const data=await res.json();if(!res.ok||!data.success)throw new Error(data.error||'Delete failed');location.reload();}catch(err){alert(err.message);}});
+document.getElementById('delete-selected-services')?.addEventListener('click',async()=>{const ids=[...document.querySelectorAll('.service-bulk-select:checked')].map(box=>Number(box.value));if(!ids.length)return showToast('Select at least one service.','error');if(!await confirmModal(`Delete ${ids.length} selected service(s)? Services used in existing documents cannot be deleted.`,{title:'Delete services'}))return;try{const res=await fetch('services.php',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({action:'bulk_delete',ids})});const data=await res.json();if(!res.ok||!data.success)throw new Error(data.error||'Delete failed');location.reload();}catch(err){showToast(err.message,'error');}});
 
 async function openSvcForm(id = null) {
     let data = { name:'', description:'', unit_price:0, unit:'item', tax_rate:18 };
@@ -182,7 +182,7 @@ async function saveSvc() {
 }
 
 async function deleteSvc(id) {
-    if (!confirm('Delete this service?')) return;
+    if (!await confirmModal('Delete this service?', {title:'Delete service'})) return;
     const res = await api('services.php', { method:'POST', body: JSON.stringify({ action:'delete', id }) });
     if (res.success) { showToast('Deleted'); setTimeout(() => location.reload(), 600); }
     else showToast('Delete failed','error');

@@ -181,9 +181,9 @@ document.getElementById('client-search')?.addEventListener('input',e=>{const q=e
 document.getElementById('select-all-clients')?.addEventListener('change', e => document.querySelectorAll('.client-bulk-select').forEach(box => box.checked = e.target.checked));
 document.getElementById('delete-selected-clients')?.addEventListener('click', async () => {
     const ids = [...document.querySelectorAll('.client-bulk-select:checked')].map(box => Number(box.value));
-    if (!ids.length) return alert('Select at least one client.');
-    if (!confirm(`Delete ${ids.length} selected client(s)? Clients linked to orders cannot be deleted.`)) return;
-    try { const res = await fetch('clients.php', {method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({action:'bulk_delete',ids})}); const data=await res.json(); if(!res.ok||!data.success) throw new Error(data.error||'Delete failed'); location.reload(); } catch(err) { alert(err.message); }
+    if (!ids.length) return showToast('Select at least one client.', 'error');
+    if (!await confirmModal(`Delete ${ids.length} selected client(s)? Clients linked to orders cannot be deleted.`, {title:'Delete clients'})) return;
+    try { const res = await fetch('clients.php', {method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({action:'bulk_delete',ids})}); const data=await res.json(); if(!res.ok||!data.success) throw new Error(data.error||'Delete failed'); location.reload(); } catch(err) { showToast(err.message, 'error'); }
 });
 
 async function openClientForm(id = null) {
@@ -278,7 +278,7 @@ async function saveClient() {
 }
 
 async function deleteClient(id, name) {
-    if (!confirm(`Delete client "${name}"? This cannot be undone.`)) return;
+    if (!await confirmModal(`Delete client "${name}"? This cannot be undone.`, {title:'Delete client'})) return;
 
     const res = await api('clients.php', {
         method: 'POST',

@@ -1231,26 +1231,26 @@ document.addEventListener('DOMContentLoaded', function () {
         if (invoiceSignatureType.value === 'draw') {
             if (!hasSignature) {
                 e.preventDefault();
-                alert('Please draw a signature before saving.');
+                showToast('Please draw a signature before saving.', 'error');
                 return;
             }
 
             invoiceSignatureData.value = canvas.toDataURL('image/png');
             if (!invoiceSignatureData.value) {
                 e.preventDefault();
-                alert('Failed to capture signature. Please draw again.');
+                showToast('Failed to capture signature. Please draw again.', 'error');
             }
         } else {
             if (!invoiceSignatureFile.files.length && !invoiceExistingSignaturePath.value) {
                 e.preventDefault();
-                alert('Please upload a signature image before saving.');
+                showToast('Please upload a signature image before saving.', 'error');
             }
         }
     });
 });
 
 async function cancelInvoice(id) {
-    if (!confirm('Cancel this invoice?')) return;
+    if (!await confirmModal('Cancel this invoice?', {title:'Cancel invoice'})) return;
 
     try {
         const response = await fetch('api/invoices.php', {
@@ -1279,10 +1279,10 @@ async function cancelInvoice(id) {
             throw new Error(data.error || data.message || 'Failed to cancel invoice');
         }
 
-        alert(data.message || 'Invoice cancelled successfully');
+        showToast(data.message || 'Invoice cancelled successfully');
         window.location.reload();
     } catch (error) {
-        alert(error.message || 'Failed to cancel invoice');
+        showToast(error.message || 'Failed to cancel invoice', 'error');
     }
 }
 
@@ -1318,9 +1318,9 @@ async function sendInvoiceEmail(invoiceId, btn) {
             throw new Error(data.error || data.message || 'Failed to send invoice email');
         }
 
-        alert(data.message || 'Invoice email sent successfully');
+        showToast(data.message || 'Invoice email sent successfully');
     } catch (error) {
-        alert(error.message || 'Failed to send invoice email');
+        showToast(error.message || 'Failed to send invoice email', 'error');
     } finally {
         if (btn) {
             btn.disabled = false;
@@ -1330,7 +1330,7 @@ async function sendInvoiceEmail(invoiceId, btn) {
 }
 
 document.getElementById('select-all-invoices')?.addEventListener('change',e=>document.querySelectorAll('.invoice-bulk-select').forEach(box=>box.checked=e.target.checked));
-document.getElementById('delete-selected-invoices')?.addEventListener('click',async()=>{const ids=[...document.querySelectorAll('.invoice-bulk-select:checked')].map(box=>Number(box.value));if(!ids.length)return alert('Select at least one invoice.');if(!confirm(`Delete ${ids.length} selected invoice(s)? Paid invoices and invoices with receipts cannot be deleted.`))return;try{const res=await fetch('invoice_view.php',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({action:'bulk_delete_invoices',ids})});const data=await res.json();if(!res.ok||!data.success)throw new Error(data.error||'Delete failed');location.reload();}catch(err){alert(err.message);}});
+document.getElementById('delete-selected-invoices')?.addEventListener('click',async()=>{const ids=[...document.querySelectorAll('.invoice-bulk-select:checked')].map(box=>Number(box.value));if(!ids.length)return showToast('Select at least one invoice.','error');if(!await confirmModal(`Delete ${ids.length} selected invoice(s)? Paid invoices and invoices with receipts cannot be deleted.`,{title:'Delete invoices'}))return;try{const res=await fetch('invoice_view.php',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({action:'bulk_delete_invoices',ids})});const data=await res.json();if(!res.ok||!data.success)throw new Error(data.error||'Delete failed');location.reload();}catch(err){showToast(err.message,'error');}});
 </script>
 
 <?php include 'includes/footer.php'; ?>

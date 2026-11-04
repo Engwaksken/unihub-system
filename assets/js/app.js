@@ -18,6 +18,7 @@ document.addEventListener('click', event => {
 });
 
 // ---- MODAL -------------------------------------------------
+let pendingConfirmResolver = null;
 function openModal(html) {
     document.getElementById('modal-body').innerHTML = html;
     document.getElementById('modal').classList.add('active');
@@ -27,6 +28,35 @@ function closeModal() {
     document.getElementById('modal').classList.remove('active');
     document.getElementById('modal-overlay').classList.remove('active');
     document.getElementById('modal-body').innerHTML = '';
+    if (pendingConfirmResolver) {
+        const resolve = pendingConfirmResolver;
+        pendingConfirmResolver = null;
+        resolve(false);
+    }
+}
+
+function resolveModalConfirmation(confirmed) {
+    const resolve = pendingConfirmResolver;
+    pendingConfirmResolver = null;
+    closeModal();
+    if (resolve) resolve(confirmed);
+}
+
+function confirmModal(message, options = {}) {
+    if (pendingConfirmResolver) resolveModalConfirmation(false);
+    return new Promise(resolve => {
+        pendingConfirmResolver = resolve;
+        const escape = value => String(value).replace(/[&<>"']/g, char => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#039;'}[char]));
+        const title = escape(options.title || 'Please confirm');
+        const confirmText = escape(options.confirmText || 'Confirm');
+        const cancelText = escape(options.cancelText || 'Cancel');
+        const dangerClass = options.danger === false ? 'btn-primary' : 'btn-danger';
+        openModal(`<section class="confirm-dialog" role="alertdialog" aria-modal="true" aria-labelledby="confirm-dialog-title"><h3 id="confirm-dialog-title">${title}</h3><p>${escape(message)}</p><div class="confirm-dialog-actions"><button type="button" class="btn btn-ghost" onclick="resolveModalConfirmation(false)">${cancelText}</button><button type="button" class="btn ${dangerClass}" onclick="resolveModalConfirmation(true)">${confirmText}</button></div></section>`);
+        const style = document.createElement('style');
+        style.textContent = '.confirm-dialog{padding:8px}.confirm-dialog h3{margin:0 0 10px;color:var(--text);font-size:1.15rem}.confirm-dialog p{margin:0;color:var(--text-muted);line-height:1.6}.confirm-dialog-actions{display:flex;justify-content:flex-end;gap:10px;margin-top:22px}';
+        document.getElementById('modal-body').appendChild(style);
+        document.querySelector('.confirm-dialog-actions button:last-child')?.focus();
+    });
 }
 
 // ---- TOAST -------------------------------------------------

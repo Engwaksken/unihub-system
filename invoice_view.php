@@ -420,14 +420,14 @@ $canVoid   = $status !== 'paid' && $status !== 'void';
 
 <script>
 async function voidInvoice(id) {
-    if (!confirm('Void this invoice? The related order will return to pending if no other invoice remains.')) return;
+    if (!await confirmModal('Void this invoice? The related order will return to pending if no other invoice remains.', {title:'Void invoice'})) return;
     const res = await api('invoice_view.php?id=' + id, { method:'POST', body: JSON.stringify({ action:'void_invoice', id }) });
     if (res.success) { showToast(res.message || 'Invoice voided'); setTimeout(() => location.reload(), 700); }
     else showToast(res.error || 'Failed to void invoice', 'error');
 }
 
 async function deleteInvoice(id) {
-    if (!confirm('Delete this invoice? This action cannot be undone.')) return;
+    if (!await confirmModal('Delete this invoice? This action cannot be undone.', {title:'Delete invoice'})) return;
     const res = await api('invoice_view.php?id=' + id, { method:'POST', body: JSON.stringify({ action:'delete_invoice', id }) });
     if (res.success) { showToast(res.message || 'Invoice deleted'); setTimeout(() => { location.href = res.redirect || 'invoices.php'; }, 700); }
     else showToast(res.error || 'Failed to delete invoice', 'error');

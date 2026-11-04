@@ -70,7 +70,7 @@ include __DIR__ . '/includes/header.php';
  canvas.addEventListener('pointermove',e=>{if(!drawing)return;const p=point(e);ctx.lineTo(p.x,p.y);ctx.stroke();});
  canvas.addEventListener('pointerup',()=>drawing=false);canvas.addEventListener('pointercancel',()=>drawing=false);
   document.getElementById('clearSignature').addEventListener('click',()=>{ctx.clearRect(0,0,canvas.width,canvas.height);input.value='';dirty=true;});
-  document.getElementById('signatureFile').addEventListener('change',e=>{const file=e.target.files[0];if(!file)return;if(file.size>500000){alert('Signature file must be 500 KB or smaller.');e.target.value='';return;}const reader=new FileReader();reader.onload=()=>{input.value=reader.result;dirty=false;ctx.clearRect(0,0,canvas.width,canvas.height);const img=new Image();img.onload=()=>ctx.drawImage(img,0,0,canvas.width,canvas.height);img.src=reader.result;};reader.readAsDataURL(file);});
+  document.getElementById('signatureFile').addEventListener('change',e=>{const file=e.target.files[0];if(!file)return;if(file.size>500000){showToast('Signature file must be 500 KB or smaller.','error');e.target.value='';return;}const reader=new FileReader();reader.onload=()=>{input.value=reader.result;dirty=false;ctx.clearRect(0,0,canvas.width,canvas.height);const img=new Image();img.onload=()=>ctx.drawImage(img,0,0,canvas.width,canvas.height);img.src=reader.result;};reader.readAsDataURL(file);});
   document.getElementById('profileSignatureForm').addEventListener('submit',e=>{if(dirty)input.value=canvas.toDataURL('image/png');});
 })();
 </script>

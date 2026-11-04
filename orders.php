@@ -352,7 +352,7 @@ window.__services = <?= json_encode($services) ?>;
     }
     [search, from, to].forEach(input => input.addEventListener('input', () => { page = 1; render(); }));
     document.getElementById('select-all-orders')?.addEventListener('change',e=>document.querySelectorAll('.order-bulk-select:not(:disabled)').forEach(box=>box.checked=e.target.checked));
-    document.getElementById('delete-selected-orders')?.addEventListener('click',async()=>{const ids=[...document.querySelectorAll('.order-bulk-select:checked')].map(box=>Number(box.value));if(!ids.length)return alert('Select at least one order.');if(!confirm(`Permanently delete ${ids.length} selected order(s)? Only cancelled orders can be deleted.`))return;try{const res=await fetch('orders.php',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({action:'bulk_delete',ids})});const data=await res.json();if(!res.ok||!data.success)throw new Error(data.error||'Delete failed');location.reload();}catch(err){alert(err.message);}});
+    document.getElementById('delete-selected-orders')?.addEventListener('click',async()=>{const ids=[...document.querySelectorAll('.order-bulk-select:checked')].map(box=>Number(box.value));if(!ids.length)return showToast('Select at least one order.','error');if(!await confirmModal(`Permanently delete ${ids.length} selected order(s)? Only cancelled orders can be deleted.`,{title:'Delete orders'}))return;try{const res=await fetch('orders.php',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({action:'bulk_delete',ids})});const data=await res.json();if(!res.ok||!data.success)throw new Error(data.error||'Delete failed');location.reload();}catch(err){showToast(err.message,'error');}});
     document.getElementById('clear-orders-period').addEventListener('click', () => { from.value = ''; to.value = ''; page = 1; render(); });
     render();
 })();
@@ -444,7 +444,7 @@ async function saveOrder() {
 }
 
 async function generateInvoice(orderId) {
-    if (!confirm('Generate invoice for this order?')) return;
+    if (!await confirmModal('Generate invoice for this order?', {title:'Generate invoice',confirmText:'Generate',danger:false})) return;
 
     const res = await api('orders.php', {
         method: 'POST',
@@ -463,7 +463,7 @@ async function generateInvoice(orderId) {
 }
 
 async function cancelOrder(id) {
-    if (!confirm('Cancel this order?')) return;
+    if (!await confirmModal('Cancel this order?', {title:'Cancel order'})) return;
 
     const res = await api('orders.php', {
         method: 'POST',
@@ -482,7 +482,7 @@ async function cancelOrder(id) {
 }
 
 async function deleteOrder(id) {
-    if (!confirm('Delete this cancelled order permanently? Linked invoice records will also be removed.')) return;
+    if (!await confirmModal('Delete this cancelled order permanently? Linked invoice records will also be removed.', {title:'Delete order'})) return;
 
     const res = await api('orders.php', {
         method: 'POST',

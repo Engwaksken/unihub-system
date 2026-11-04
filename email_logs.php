@@ -203,11 +203,11 @@ async function resendLog(type, logId) {
         if (typeof showToast === 'function') {
             showToast(data.success ? (data.message || 'Resent successfully') : (data.error || 'Resend failed'), data.success ? 'success' : 'error');
         } else {
-            alert(data.success ? data.message : (data.error || 'Resend failed'));
+            showToast(data.success ? data.message : (data.error || 'Resend failed'), data.success ? 'success' : 'error');
         }
         if (data.success) setTimeout(() => location.reload(), 800);
     } catch (e) {
-        alert('Network error while resending.');
+        showToast('Network error while resending.', 'error');
     }
 }
 </script>
