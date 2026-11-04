@@ -122,6 +122,10 @@ try {
             </a>
         </li>
 
+        <li class="nav-item <?= str_starts_with($currentPage, 'delivery_note') ? 'active' : '' ?>">
+            <a href="delivery_notes.php"><i class="fas fa-truck"></i> Delivery Notes</a>
+        </li>
+
         <li class="nav-item <?= $currentPage === 'services' ? 'active' : '' ?>">
             <a href="services.php">
                 <i class="fas fa-box-open"></i> Services

@@ -512,7 +512,6 @@ include 'includes/header.php';
                     <tr data-status="<?= htmlspecialchars($status) ?>" data-search="<?= htmlspecialchars($searchText) ?>">
                         <td>
                             <a href="invoice_view.php?id=<?= $invoiceId ?>" style="color:var(--gold);font-weight:600;text-decoration:none">
-                                <i class="fas fa-file-invoice" style="margin-right:6px"></i>
                                 <?= htmlspecialchars($invoiceNumber) ?>
                             </a>
                         </td>
@@ -520,26 +519,22 @@ include 'includes/header.php';
                         <td>
                             <div class="invoice-client-box">
                                 <span>
-                                    <i class="fas fa-user" style="margin-right:6px;color:var(--text-muted)"></i>
                                     <?= htmlspecialchars($inv['client_name'] ?? 'Unknown Client') ?>
                                 </span>
                                 <?php if (!empty($inv['client_email'])): ?>
                                     <small style="color:var(--text-muted)">
-                                        <i class="fas fa-envelope" style="margin-right:6px"></i>
-                                        <?= htmlspecialchars($inv['client_email']) ?>
+                                         <?= htmlspecialchars($inv['client_email']) ?>
                                     </small>
                                 <?php endif; ?>
                             </div>
                         </td>
 
                         <td style="font-size:.86rem;color:var(--text-muted)">
-                            <i class="fas fa-hashtag" style="margin-right:6px"></i>
                             <?= htmlspecialchars($inv['order_number'] ?? '-') ?>
                         </td>
 
                         <td>
                             <?php if (!empty($inv['issued_date'])): ?>
-                                <i class="fas fa-calendar-alt" style="margin-right:6px;color:var(--text-muted)"></i>
                                 <?= htmlspecialchars(date('d/m/Y', strtotime($inv['issued_date']))) ?>
                             <?php else: ?>
                                 -
@@ -548,7 +543,6 @@ include 'includes/header.php';
 
                         <td>
                             <?php if (!empty($inv['due_date'])): ?>
-                                <i class="fas fa-clock" style="margin-right:6px;color:var(--text-muted)"></i>
                                 <?= htmlspecialchars(date('d/m/Y', strtotime($inv['due_date']))) ?>
                             <?php else: ?>
                                 -
@@ -557,7 +551,6 @@ include 'includes/header.php';
 
                         <td>
                             <strong>
-                                <i class="fas fa-coins" style="margin-right:6px;color:var(--green)"></i>
                                 <?= function_exists('formatMoney')
                                     ? formatMoney($invoiceTotal, $cfg['currency_symbol'] ?? 'UGX ')
                                     : formatMoneySafe($invoiceTotal, $cfg['currency_symbol'] ?? 'UGX ') ?>
@@ -573,7 +566,6 @@ include 'includes/header.php';
                         <td>
                             <?php if ($receiptId > 0): ?>
                                 <a href="receipt_view.php?id=<?= $receiptId ?>" class="btn btn-outline btn-sm">
-                                    <i class="fas fa-receipt"></i>
                                     <?= htmlspecialchars($receiptNumber !== '' ? $receiptNumber : 'View Receipt') ?>
                                 </a>
                             <?php elseif (in_array($status, ['unpaid', 'partial', 'overdue'], true)): ?>
@@ -584,7 +576,6 @@ include 'includes/header.php';
                                     data-number="<?= htmlspecialchars($invoiceNumber) ?>"
                                     data-total="<?= htmlspecialchars((string)$invoiceTotal) ?>"
                                 >
-                                    <i class="fas fa-check-circle"></i>
                                     Mark Paid
                                 </button>
                             <?php else: ?>
@@ -595,7 +586,6 @@ include 'includes/header.php';
                         <td>
                             <?php if ($isSigned): ?>
                                 <span class="sign-status signed">
-                                    <i class="fas fa-signature"></i>
                                     Signed
                                 </span>
                                 <?php if (!empty($inv['authorized_name'])): ?>
@@ -605,7 +595,6 @@ include 'includes/header.php';
                                 <?php endif; ?>
                             <?php else: ?>
                                 <span class="sign-status unsigned">
-                                    <i class="fas fa-pen-nib"></i>
                                     Not signed
                                 </span>
                             <?php endif; ?>
@@ -615,6 +604,10 @@ include 'includes/header.php';
                             <div class="invoice-actions">
                                 <a href="invoice_view.php?id=<?= $invoiceId ?>" class="btn btn-ghost btn-sm" title="View invoice" aria-label="View invoice">
                                     <i class="fas fa-eye"></i>
+                                </a>
+
+                                <a href="delivery_notes.php?view=<?= (int)$inv['order_id'] ?>" class="btn btn-ghost btn-sm" title="Delivery note" aria-label="Delivery note">
+                                    <i class="fas fa-truck"></i>
                                 </a>
 
                                 <button

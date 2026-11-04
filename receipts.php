@@ -314,14 +314,12 @@ include 'includes/header.php';
                 <tr>
                     <td>
                         <strong style="color:var(--green)">
-                            <i class="fas fa-file-invoice-dollar" style="margin-right:6px"></i>
                             <?= htmlspecialchars($r['receipt_number']) ?>
                         </strong>
                     </td>
 
                     <td>
                         <a href="invoice_view.php?id=<?= (int)$r['invoice_id'] ?>" style="color:var(--gold);text-decoration:none">
-                            <i class="fas fa-file-invoice" style="margin-right:6px"></i>
                             <?= htmlspecialchars($r['invoice_number']) ?>
                         </a>
                     </td>
@@ -329,12 +327,10 @@ include 'includes/header.php';
                     <td>
                         <div style="display:flex;flex-direction:column;gap:4px">
                             <span>
-                                <i class="fas fa-user" style="margin-right:6px;color:var(--text-muted)"></i>
                                 <?= htmlspecialchars($r['client_name']) ?>
                             </span>
                             <?php if (!empty($r['client_email'])): ?>
                                 <small style="color:var(--text-muted)">
-                                    <i class="fas fa-envelope" style="margin-right:6px"></i>
                                     <?= htmlspecialchars($r['client_email']) ?>
                                 </small>
                             <?php endif; ?>
@@ -342,13 +338,11 @@ include 'includes/header.php';
                     </td>
 
                     <td>
-                        <i class="fas fa-calendar-alt" style="margin-right:6px;color:var(--text-muted)"></i>
                         <?= !empty($r['payment_date']) ? date('d/m/Y', strtotime($r['payment_date'])) : '—' ?>
                     </td>
 
                     <td>
                         <strong>
-                            <i class="fas fa-coins" style="margin-right:6px;color:var(--green)"></i>
                             <?= function_exists('formatMoney')
                                 ? formatMoney($r['amount_paid'], $cfg['currency_symbol'] ?? 'UGX ')
                                 : formatMoneySafe($r['amount_paid'], $cfg['currency_symbol'] ?? 'UGX ') ?>
@@ -357,7 +351,6 @@ include 'includes/header.php';
 
                     <td>
                         <span class="badge badge-invoiced" style="font-size:.72rem">
-                            <i class="fas fa-money-check-alt" style="margin-right:5px"></i>
                             <?= ucwords(str_replace('_', ' ', (string)$r['payment_method'])) ?>
                         </span>
                     </td>
@@ -369,7 +362,6 @@ include 'includes/header.php';
                     <td>
                         <?php if ($isSigned): ?>
                             <span class="receipt-sign-status signed">
-                                <i class="fas fa-signature"></i>
                                 Signed
                             </span>
                             <?php if (!empty($r['authorized_name'])): ?>
@@ -379,7 +371,6 @@ include 'includes/header.php';
                             <?php endif; ?>
                         <?php else: ?>
                             <span class="receipt-sign-status unsigned">
-                                <i class="fas fa-pen-nib"></i>
                                 Not signed
                             </span>
                         <?php endif; ?>

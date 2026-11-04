@@ -40,6 +40,9 @@ try {
     $pdo = getDB();
     ensureUserSignatureProfile($pdo);
     $cfg = getSettings();
+    $profileStmt = $pdo->prepare('SELECT authorized_name, profile_signature_data FROM users WHERE id=? LIMIT 1');
+    $profileStmt->execute([(int)($_SESSION['user_id'] ?? 0)]);
+    $signatory = $profileStmt->fetch(PDO::FETCH_ASSOC) ?: [];
 
     $invoiceId     = (int)($data['invoice_id'] ?? 0);
     $amountPaid    = (float)($data['amount_paid'] ?? 0);

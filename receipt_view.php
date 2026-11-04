@@ -78,7 +78,7 @@ $signedAt       = trim((string)($rcp['signed_at']       ?? ''));
 $signatureExists = false;
 $signatureUrl    = '';
 $signatureData = trim((string)($rcp['signature_data'] ?? ''));
-if (str_starts_with($signatureData, 'data:image/png;base64,')) {
+if (str_starts_with($signatureData, 'data:image/')) {
     $signatureExists = true;
     $signatureUrl = $signatureData;
 }
