@@ -1351,7 +1351,7 @@ body.login-page {
 
 /* ── Header band ────────────────────────────── */
 .uh-header{
-    background:#1a2a72;
+    background:var(--navy,#1a2a72);
     padding:22px 36px 22px 28px;
     display:flex;
     justify-content:space-between;
@@ -1365,20 +1365,21 @@ body.login-page {
     gap:14px;
 }
 .uh-icon-box{
-    width:56px;height:56px;
-    background:#fc7f10;
-    border-radius:8px;
+    width:72px;height:64px;
+    background:transparent;
     display:flex;align-items:center;justify-content:center;
     flex-shrink:0;
 }
-.uh-icon-box img{ width:42px;height:42px;object-fit:contain;display:block; }
+.uh-icon-box img{ width:100%;height:100%;object-fit:contain;display:block; }
 .uh-wordmark{ line-height:1.1; }
 .uh-wordmark-main{
-    font-family:'Arial Narrow',Arial,sans-serif;
+    font-family:var(--font-sans,Arial,sans-serif);
     font-weight:700;
-    font-size:2rem;
-    letter-spacing:-.5px;
-    line-height:1;
+    font-size:clamp(1rem,2.4vw,1.65rem);
+    letter-spacing:0;
+    line-height:1.2;
+    color:#fff;
+    overflow-wrap:anywhere;
 }
 .uh-wordmark-main span.or{ color:#fc7f10; }
 .uh-wordmark-main span.wh{ color:#ffffff; }
@@ -1674,8 +1675,8 @@ body.login-page {
 }
 
 .uh-logo-img {
-    width: 42px;
-    height: 42px;
+    width: 66px;
+    height: 64px;
     object-fit: contain;
     display: block;
 }

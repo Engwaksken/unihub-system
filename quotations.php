@@ -4,6 +4,8 @@ require_once 'config/db.php';
 $pageTitle = 'Quotations';
 $pdo = getDB();
 $cfg = getSettings();
+$quoteLogo = trim((string)($cfg['company_logo'] ?? ''));
+if ($quoteLogo === '' || !is_file(__DIR__ . '/' . ltrim($quoteLogo, '/\\'))) $quoteLogo = 'assets/img/logo.png';
 ensureUserSignatureProfile($pdo);
 $pdo->exec("CREATE TABLE IF NOT EXISTS quotations (
     id INT UNSIGNED NOT NULL AUTO_INCREMENT PRIMARY KEY,
@@ -258,7 +260,7 @@ include 'includes/header.php';
 
 <div class="print-quote">
     <div class="quote-header">
-        <div class="quote-brand"><img src="assets/img/logo.png" alt="Logo"><div><div class="quote-company"><?= h($cfg['company_name'] ?? 'Company') ?></div><div class="quote-muted"><?= h($cfg['company_address'] ?? '') ?><br><?= h($cfg['company_phone'] ?? '') ?><?php if (!empty($cfg['company_email'])): ?> | <?= h($cfg['company_email']) ?><?php endif; ?><br><?php if (!empty($cfg['company_tin'])): ?>TIN: <?= h($cfg['company_tin']) ?><?php endif; ?></div></div></div>
+        <div class="quote-brand"><img src="<?= h($quoteLogo) ?>" alt="<?= h($cfg['company_name'] ?? 'Company') ?> logo"><div><div class="quote-company"><?= h($cfg['company_name'] ?? 'Company') ?></div><div class="quote-muted"><?= h($cfg['company_address'] ?? '') ?><br><?= h($cfg['company_phone'] ?? '') ?><?php if (!empty($cfg['company_email'])): ?> | <?= h($cfg['company_email']) ?><?php endif; ?><br><?php if (!empty($cfg['company_tin'])): ?>TIN: <?= h($cfg['company_tin']) ?><?php endif; ?></div></div></div>
         <div class="quote-doc-title"><h2>QUOTATION</h2><div class="quote-muted"><?= h($quote['quote_number']) ?></div><div class="status-pill status-<?= h($quote['status']) ?>"><?= h($quote['status']) ?></div></div>
     </div>
     <div class="quote-meta">
