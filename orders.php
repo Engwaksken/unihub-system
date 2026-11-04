@@ -86,6 +86,11 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             ]);
         }
 
+        if ($action === 'bulk_delete') {
+            $count = $orderModel->deleteCancelledBatch($data['ids'] ?? []);
+            jsonResponse(['success'=>true,'message'=>$count . ' cancelled order(s) deleted.']);
+        }
+
         jsonResponse(['success' => false, 'error' => 'Invalid action'], 400);
 
     } catch (Throwable $e) {
@@ -237,13 +242,14 @@ include 'includes/header.php';
         <table id="orders-table">
             <thead>
             <tr>
-                <th>Order #</th><th>Client</th><th>Date</th><th>Due</th><th>Items</th><th>Status</th><th>Invoice</th><th>Actions</th>
+                <th><input type="checkbox" id="select-all-orders" aria-label="Select all orders"></th><th>Order #</th><th>Client</th><th>Date</th><th>Due</th><th>Items</th><th>Status</th><th>Invoice</th><th>Actions</th>
             </tr>
             </thead>
 
             <tbody>
             <?php foreach ($orders as $o): ?>
                 <tr data-order-date="<?= htmlspecialchars((string)($o['order_date'] ?? ''), ENT_QUOTES, 'UTF-8') ?>">
+                    <td><input type="checkbox" class="order-bulk-select" value="<?= (int)$o['id'] ?>" <?= $o['status'] === 'cancelled' ? '' : 'disabled title="Only cancelled orders can be deleted"' ?> aria-label="Select order <?= htmlspecialchars($o['order_number'], ENT_QUOTES, 'UTF-8') ?>"></td>
                     <td>
                         <strong style="color:var(--gold)">
                             <?= htmlspecialchars($o['order_number']) ?>
@@ -302,7 +308,7 @@ include 'includes/header.php';
 
             <?php if (empty($orders)): ?>
                 <tr>
-                    <td colspan="8">
+                    <td colspan="9">
                         <div class="empty-state">
                             <i class="fas fa-clipboard-list"></i>
                             <p>No orders yet. Create your first order.</p>
@@ -314,6 +320,7 @@ include 'includes/header.php';
         </table>
     </div>
     <nav class="users-pagination" id="orders-pagination" aria-label="Order pages"></nav>
+    <div class="bulk-actions"><button class="btn btn-danger btn-sm" id="delete-selected-orders" type="button"><i class="fas fa-trash"></i> Delete selected cancelled</button></div>
 </div>
 
 <script>
@@ -344,6 +351,8 @@ window.__services = <?= json_encode($services) ?>;
         pagination.append(prev, status, next);
     }
     [search, from, to].forEach(input => input.addEventListener('input', () => { page = 1; render(); }));
+    document.getElementById('select-all-orders')?.addEventListener('change',e=>document.querySelectorAll('.order-bulk-select:not(:disabled)').forEach(box=>box.checked=e.target.checked));
+    document.getElementById('delete-selected-orders')?.addEventListener('click',async()=>{const ids=[...document.querySelectorAll('.order-bulk-select:checked')].map(box=>Number(box.value));if(!ids.length)return alert('Select at least one order.');if(!confirm(`Permanently delete ${ids.length} selected order(s)? Only cancelled orders can be deleted.`))return;try{const res=await fetch('orders.php',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({action:'bulk_delete',ids})});const data=await res.json();if(!res.ok||!data.success)throw new Error(data.error||'Delete failed');location.reload();}catch(err){alert(err.message);}});
     document.getElementById('clear-orders-period').addEventListener('click', () => { from.value = ''; to.value = ''; page = 1; render(); });
     render();
 })();

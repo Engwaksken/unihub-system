@@ -464,6 +464,7 @@ include 'includes/header.php';
         <table id="inv-table">
             <thead>
                 <tr>
+                    <th><input type="checkbox" id="select-all-invoices" aria-label="Select all invoices on this page"></th>
                     <th>Invoice #</th>
                     <th>Client</th>
                     <th>Order</th>
@@ -510,6 +511,7 @@ include 'includes/header.php';
                         );
                     ?>
                     <tr data-status="<?= htmlspecialchars($status) ?>" data-search="<?= htmlspecialchars($searchText) ?>">
+                        <td><input type="checkbox" class="invoice-bulk-select" value="<?= $invoiceId ?>" aria-label="Select invoice <?= htmlspecialchars($invoiceNumber, ENT_QUOTES, 'UTF-8') ?>"></td>
                         <td>
                             <a href="invoice_view.php?id=<?= $invoiceId ?>" style="color:var(--gold);font-weight:600;text-decoration:none">
                                 <?= htmlspecialchars($invoiceNumber) ?>
@@ -639,7 +641,7 @@ include 'includes/header.php';
                 <?php endforeach; ?>
             <?php else: ?>
                 <tr>
-                    <td colspan="10">
+                    <td colspan="11">
                         <div class="empty-state" style="padding:28px;text-align:center">
                             <i class="fas fa-file-invoice-dollar" style="font-size:42px;color:var(--text-muted);margin-bottom:12px"></i>
                             <p style="margin:0">No invoices found.</p>
@@ -650,6 +652,7 @@ include 'includes/header.php';
             </tbody>
         </table>
     </div>
+    <div class="bulk-actions" style="margin-top:12px"><button class="btn btn-danger btn-sm" type="button" id="delete-selected-invoices"><i class="fas fa-trash"></i> Delete selected</button><small>Paid invoices and invoices with receipts are protected.</small></div>
 </div>
 
 <div id="paymentModalBackdrop" class="invoice-modal-backdrop">
@@ -1325,6 +1328,9 @@ async function sendInvoiceEmail(invoiceId, btn) {
         }
     }
 }
+
+document.getElementById('select-all-invoices')?.addEventListener('change',e=>document.querySelectorAll('.invoice-bulk-select').forEach(box=>box.checked=e.target.checked));
+document.getElementById('delete-selected-invoices')?.addEventListener('click',async()=>{const ids=[...document.querySelectorAll('.invoice-bulk-select:checked')].map(box=>Number(box.value));if(!ids.length)return alert('Select at least one invoice.');if(!confirm(`Delete ${ids.length} selected invoice(s)? Paid invoices and invoices with receipts cannot be deleted.`))return;try{const res=await fetch('invoice_view.php',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({action:'bulk_delete_invoices',ids})});const data=await res.json();if(!res.ok||!data.success)throw new Error(data.error||'Delete failed');location.reload();}catch(err){alert(err.message);}});
 </script>
 
 <?php include 'includes/footer.php'; ?>

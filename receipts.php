@@ -14,6 +14,43 @@ if (!function_exists('formatMoneySafe')) {
 
 $saveError = '';
 
+if ($_SERVER['REQUEST_METHOD'] === 'POST' && ($_POST['action'] ?? '') === 'bulk_delete_receipts') {
+    $ids = array_values(array_unique(array_filter(array_map('intval', $_POST['receipt_ids'] ?? []), static fn($value) => $value > 0)));
+    if (!$ids) $saveError = 'Select at least one receipt.';
+    else {
+        try {
+            $marks = implode(',', array_fill(0, count($ids), '?'));
+            $find = $pdo->prepare("SELECT id,invoice_id FROM receipts WHERE id IN ($marks)");
+            $find->execute($ids);
+            $selected = $find->fetchAll(PDO::FETCH_ASSOC);
+            if (count($selected) !== count($ids)) throw new RuntimeException('One or more selected receipts no longer exist.');
+            $invoiceIds = array_values(array_unique(array_map(static fn($r) => (int)$r['invoice_id'], $selected)));
+            $pdo->beginTransaction();
+            $pdo->prepare("DELETE FROM receipts WHERE id IN ($marks)")->execute($ids);
+            $sum = $pdo->prepare('SELECT COALESCE(SUM(amount_paid),0) FROM receipts WHERE invoice_id=?');
+            $invoiceStmt = $pdo->prepare('SELECT total,order_id,status FROM invoices WHERE id=?');
+            $updateInvoice = $pdo->prepare('UPDATE invoices SET status=? WHERE id=?');
+            $updateOrder = $pdo->prepare('UPDATE orders SET status=?,updated_at=NOW() WHERE id=?');
+            foreach ($invoiceIds as $invoiceId) {
+                $invoiceStmt->execute([$invoiceId]);
+                $invoice = $invoiceStmt->fetch(PDO::FETCH_ASSOC);
+                if (!$invoice || in_array(strtolower((string)$invoice['status']), ['void','cancelled'], true)) continue;
+                $sum->execute([$invoiceId]);
+                $paid = (float)$sum->fetchColumn();
+                $total = (float)$invoice['total'];
+                $status = $paid >= $total ? 'paid' : ($paid > 0 ? 'partial' : 'unpaid');
+                $updateInvoice->execute([$status, $invoiceId]);
+                $updateOrder->execute([$status === 'paid' ? 'paid' : ($status === 'partial' ? 'partial' : 'pending'), (int)$invoice['order_id']]);
+            }
+            $pdo->commit();
+            header('Location: receipts.php?deleted=' . count($ids)); exit;
+        } catch (Throwable $e) {
+            if ($pdo->inTransaction()) $pdo->rollBack();
+            $saveError = $e->getMessage();
+        }
+    }
+}
+
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && ($_POST['action'] ?? '') === 'save_signature') {
     try {
         $receiptId      = (int)($_POST['receipt_id'] ?? 0);
@@ -279,9 +316,12 @@ include 'includes/header.php';
         Authorized signature saved successfully.
     </div>
 <?php endif; ?>
+<?php if (isset($_GET['deleted'])): ?><div class="settings-alert settings-alert-success">Selected receipts deleted and invoice balances recalculated.</div><?php endif; ?>
 
 <div class="card">
     <form class="period-filter" method="get"><label>Payment date from <input type="date" name="date_from" value="<?= htmlspecialchars($dateFrom, ENT_QUOTES, 'UTF-8') ?>"></label><label>To <input type="date" name="date_to" value="<?= htmlspecialchars($dateTo, ENT_QUOTES, 'UTF-8') ?>"></label><button class="btn btn-primary btn-sm">Apply</button><a class="btn btn-ghost btn-sm" href="receipts.php">Clear</a></form>
+    <div class="bulk-actions" style="padding:10px 16px"><button class="btn btn-danger btn-sm" type="submit" form="bulkDeleteReceipts" onclick="return confirm('Permanently delete the selected receipts and recalculate related invoice balances?')"><i class="fas fa-trash"></i> Delete selected</button></div>
+    <form method="post" id="bulkDeleteReceipts"><input type="hidden" name="action" value="bulk_delete_receipts"></form>
     <div class="filter-bar">
         <div style="position:relative;max-width:420px;width:100%">
             <i class="fas fa-search" style="position:absolute;left:12px;top:50%;transform:translateY(-50%);color:var(--text-muted)"></i>
@@ -293,6 +333,7 @@ include 'includes/header.php';
         <table id="rcp-table">
             <thead>
                 <tr>
+                    <th><input type="checkbox" id="select-all-receipts" aria-label="Select all receipts on this page"></th>
                     <th>Receipt #</th>
                     <th>Invoice #</th>
                     <th>Client</th>
@@ -312,6 +353,7 @@ include 'includes/header.php';
                     $isSigned = !empty($r['authorized_name']) || !empty($r['signature_path']);
                 ?>
                 <tr>
+                    <td><input type="checkbox" form="bulkDeleteReceipts" name="receipt_ids[]" class="receipt-bulk-select" value="<?= (int)$r['id'] ?>" aria-label="Select receipt <?= htmlspecialchars($r['receipt_number'], ENT_QUOTES, 'UTF-8') ?>"></td>
                     <td>
                         <strong style="color:var(--green)">
                             <?= htmlspecialchars($r['receipt_number']) ?>
@@ -406,7 +448,7 @@ include 'includes/header.php';
                 <?php endforeach; ?>
             <?php else: ?>
                 <tr>
-                    <td colspan="9">
+                    <td colspan="10">
                         <div class="empty-state">
                             <i class="fas fa-receipt" style="font-size:42px;color:var(--text-muted);margin-bottom:12px"></i>
                             <p>No receipts yet. Mark an invoice as paid to generate a receipt.</p>
@@ -778,6 +820,7 @@ document.addEventListener('DOMContentLoaded', function () {
         }
     });
 });
+document.getElementById('select-all-receipts')?.addEventListener('change',e=>document.querySelectorAll('.receipt-bulk-select').forEach(box=>box.checked=e.target.checked));
 </script>
 
 <?php include 'includes/footer.php'; ?>

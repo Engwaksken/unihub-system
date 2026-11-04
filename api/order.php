@@ -235,6 +235,36 @@ class Order
         }
     }
 
+    public function deleteCancelledBatch(array $ids): int
+    {
+        $ids = array_values(array_unique(array_filter(array_map('intval', $ids), static fn($id) => $id > 0)));
+        if (!$ids) throw new Exception('Select at least one order.');
+        $marks = implode(',', array_fill(0, count($ids), '?'));
+        $check = $this->pdo->prepare("SELECT id,status FROM orders WHERE id IN ($marks)");
+        $check->execute($ids);
+        $orders = $check->fetchAll(PDO::FETCH_ASSOC);
+        if (count($orders) !== count($ids) || array_filter($orders, static fn($row) => $row['status'] !== 'cancelled')) {
+            throw new Exception('Only selected cancelled orders can be deleted.');
+        }
+        $receiptCheck = $this->pdo->prepare("SELECT COUNT(*) FROM receipts r JOIN invoices i ON i.id=r.invoice_id WHERE i.order_id IN ($marks)");
+        $receiptCheck->execute($ids);
+        if ((int)$receiptCheck->fetchColumn() > 0) throw new Exception('Orders with payment receipts cannot be deleted. Remove them from the selection.');
+        $this->pdo->beginTransaction();
+        try {
+            foreach ($ids as $id) {
+                foreach ($this->getInvoiceIdsByOrder($id) as $invoiceId) $this->deleteInvoiceDependencies((int)$invoiceId);
+                $this->deleteByColumnIfTableExists('invoices', 'order_id', $id);
+                $this->deleteByColumnIfTableExists('order_items', 'order_id', $id);
+            }
+            $this->pdo->prepare("DELETE FROM orders WHERE id IN ($marks) AND status='cancelled'")->execute($ids);
+            $this->pdo->commit();
+            return count($ids);
+        } catch (Throwable $e) {
+            $this->rollBackIfActive();
+            throw $e;
+        }
+    }
+
     public function generateInvoice(int $orderId, array $cfg): int
     {
         $order = $this->find($orderId);

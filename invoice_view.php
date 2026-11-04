@@ -89,6 +89,29 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $action = $data['action'] ?? '';
     $id     = (int)($data['id'] ?? 0);
 
+    if ($action === 'bulk_delete_invoices') {
+        $ids = array_values(array_unique(array_filter(array_map('intval', $data['ids'] ?? []), static fn($value) => $value > 0)));
+        if (!$ids) jsonResponse(['success'=>false,'error'=>'Select at least one invoice.'],400);
+        $invoices = [];
+        foreach ($ids as $invoiceId) {
+            $row = fetchInvoice($pdo, $invoiceId);
+            if (!$row) jsonResponse(['success'=>false,'error'=>'One or more selected invoices no longer exist.'],404);
+            if (invoiceHasReceipts($pdo, $invoiceId) || strtolower((string)$row['status']) === 'paid') jsonResponse(['success'=>false,'error'=>'Paid invoices or invoices with linked receipts cannot be deleted. Remove them from the selection.'],409);
+            $invoices[] = $row;
+        }
+        try {
+            $pdo->beginTransaction();
+            $delete = $pdo->prepare('DELETE FROM invoices WHERE id=?');
+            foreach ($invoices as $row) $delete->execute([(int)$row['id']]);
+            foreach (array_unique(array_map(static fn($row) => (int)$row['order_id'], $invoices)) as $orderId) recalcOrderStatusAfterInvoiceRemoval($pdo, $orderId);
+            $pdo->commit();
+            jsonResponse(['success'=>true,'message'=>count($ids).' invoice(s) deleted.']);
+        } catch (Throwable $e) {
+            if ($pdo->inTransaction()) $pdo->rollBack();
+            jsonResponse(['success'=>false,'error'=>'Unable to delete selected invoices.'],500);
+        }
+    }
+
     if ($id <= 0) jsonResponse(['success' => false, 'error' => 'Invalid invoice id'], 400);
 
     $invoice = fetchInvoice($pdo, $id);

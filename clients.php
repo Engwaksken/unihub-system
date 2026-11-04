@@ -13,6 +13,22 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $action = $data['action'] ?? '';
 
     try {
+        if ($action === 'bulk_delete') {
+            $ids = array_values(array_unique(array_filter(array_map('intval', $data['ids'] ?? []), static fn($id) => $id > 0)));
+            if (!$ids) jsonResponse(['success' => false, 'error' => 'Select at least one client.'], 400);
+            foreach ($ids as $id) if ($clientModel->hasOrders($id)) jsonResponse(['success' => false, 'error' => 'Selected clients with orders cannot be deleted. Remove those clients from the selection.'], 409);
+            $pdo->beginTransaction();
+            try {
+                $stmt = $pdo->prepare('DELETE FROM clients WHERE id=?');
+                foreach ($ids as $id) $stmt->execute([$id]);
+                $pdo->commit();
+            } catch (Throwable $e) {
+                if ($pdo->inTransaction()) $pdo->rollBack();
+                throw $e;
+            }
+            jsonResponse(['success' => true, 'message' => count($ids) . ' client(s) deleted.']);
+        }
+
         if ($action === 'save') {
             $id = (int)($data['id'] ?? 0);
 
@@ -111,13 +127,14 @@ include 'includes/header.php';
         <table id="clients-table" data-client-pagination>
             <thead>
                 <tr>
-                    <th>#</th><th>Name</th><th>Company</th><th>Email</th><th>Phone</th><th>Orders</th><th>Actions</th>
+                    <th><input type="checkbox" id="select-all-clients" aria-label="Select all clients"></th><th>#</th><th>Name</th><th>Company</th><th>Email</th><th>Phone</th><th>Orders</th><th>Actions</th>
                 </tr>
             </thead>
 
             <tbody>
             <?php foreach ($clients as $i => $c): ?>
                 <tr>
+                    <td><input type="checkbox" class="client-bulk-select" value="<?= (int)$c['id'] ?>" aria-label="Select <?= htmlspecialchars($c['name'], ENT_QUOTES, 'UTF-8') ?>"></td>
                     <td style="color:var(--text-dim);font-size:.8rem"><?= $i + 1 ?></td>
                     <td><strong><?= htmlspecialchars($c['name']) ?></strong></td>
                     <td><?= htmlspecialchars($c['company'] ?: '—') ?></td>
@@ -145,7 +162,7 @@ include 'includes/header.php';
 
             <?php if (empty($clients)): ?>
                 <tr>
-                    <td colspan="7">
+                    <td colspan="8">
                         <div class="empty-state">
                             <i class="fas fa-user-plus"></i>
                             <p>No clients yet. Add your first client.</p>
@@ -158,8 +175,17 @@ include 'includes/header.php';
     </div>
 </div>
 
+<div class="bulk-actions" style="margin:0 0 14px"><button type="button" class="btn btn-danger btn-sm" id="delete-selected-clients"><i class="fas fa-trash"></i> Delete selected</button><span id="client-selection-count"></span></div>
+
 <script>
-filterTable('client-search', 'clients-table');
+document.getElementById('client-search')?.addEventListener('input',e=>{const q=e.target.value.toLowerCase();document.querySelectorAll('#clients-table tbody tr').forEach(row=>row.hidden=!row.textContent.toLowerCase().includes(q));});
+document.getElementById('select-all-clients')?.addEventListener('change', e => document.querySelectorAll('.client-bulk-select').forEach(box => box.checked = e.target.checked));
+document.getElementById('delete-selected-clients')?.addEventListener('click', async () => {
+    const ids = [...document.querySelectorAll('.client-bulk-select:checked')].map(box => Number(box.value));
+    if (!ids.length) return alert('Select at least one client.');
+    if (!confirm(`Delete ${ids.length} selected client(s)? Clients linked to orders cannot be deleted.`)) return;
+    try { const res = await fetch('clients.php', {method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({action:'bulk_delete',ids})}); const data=await res.json(); if(!res.ok||!data.success) throw new Error(data.error||'Delete failed'); location.reload(); } catch(err) { alert(err.message); }
+});
 
 async function openClientForm(id = null) {
     let data = { name:'', email:'', phone:'', address:'', company:'', tin:'' };

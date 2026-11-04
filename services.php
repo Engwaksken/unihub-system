@@ -8,6 +8,19 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $data = json_decode(file_get_contents('php://input'), true) ?? [];
     $action = $data['action'] ?? '';
 
+    if ($action === 'bulk_delete') {
+        $ids = array_values(array_unique(array_filter(array_map('intval', $data['ids'] ?? []), static fn($id) => $id > 0)));
+        if (!$ids) jsonResponse(['success'=>false,'error'=>'Select at least one service.'],400);
+        $marks = implode(',', array_fill(0, count($ids), '?'));
+        foreach (['order_items', 'quotation_items'] as $table) {
+            try { $check = $pdo->prepare("SELECT COUNT(*) FROM `$table` WHERE service_id IN ($marks)"); $check->execute($ids); if ((int)$check->fetchColumn() > 0) jsonResponse(['success'=>false,'error'=>'Some selected services are used by existing documents and cannot be deleted.'],409); }
+            catch (PDOException $e) { if ($e->getCode() !== '42S02') throw $e; }
+        }
+        $pdo->beginTransaction();
+        try { $pdo->prepare("DELETE FROM services WHERE id IN ($marks)")->execute($ids); $pdo->commit(); jsonResponse(['success'=>true,'message'=>count($ids).' service(s) deleted.']); }
+        catch (Throwable $e) { if ($pdo->inTransaction()) $pdo->rollBack(); jsonResponse(['success'=>false,'error'=>'Unable to delete selected services.'],409); }
+    }
+
     if ($action === 'save') {
         $id   = (int)($data['id'] ?? 0);
         $name = trim($data['name'] ?? '');
@@ -59,6 +72,7 @@ include 'includes/header.php';
         <table id="svc-table" data-client-pagination>
             <thead>
                 <tr>
+                    <th><input type="checkbox" id="select-all-services" aria-label="Select all services"></th>
                     <th>Service / Product</th>
                     <th>Description</th>
                     <th>Unit Price</th>
@@ -71,6 +85,7 @@ include 'includes/header.php';
             <tbody>
             <?php foreach ($services as $s): ?>
             <tr>
+                <td><input type="checkbox" class="service-bulk-select" value="<?= (int)$s['id'] ?>" aria-label="Select <?= htmlspecialchars($s['name'], ENT_QUOTES, 'UTF-8') ?>"></td>
                 <td><strong><?= htmlspecialchars($s['name']) ?></strong></td>
                 <td style="color:var(--text-muted);font-size:.84rem;max-width:220px"><?= htmlspecialchars($s['description'] ?: '—') ?></td>
                 <td><?= formatMoney($s['unit_price'], $cfg['currency_symbol']) ?></td>
@@ -92,7 +107,7 @@ include 'includes/header.php';
             </tr>
             <?php endforeach; ?>
             <?php if (empty($services)): ?>
-            <tr><td colspan="7">
+            <tr><td colspan="8">
                 <div class="empty-state">
                     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/></svg>
                     <p>No services yet. Add your first service.</p>
@@ -104,8 +119,12 @@ include 'includes/header.php';
     </div>
 </div>
 
+<div class="bulk-actions" style="margin:0 0 14px"><button class="btn btn-danger btn-sm" type="button" id="delete-selected-services"><i class="fas fa-trash"></i> Delete selected</button></div>
+
 <script>
-filterTable('svc-search', 'svc-table');
+document.getElementById('svc-search')?.addEventListener('input',e=>{const q=e.target.value.toLowerCase();document.querySelectorAll('#svc-table tbody tr').forEach(row=>row.hidden=!row.textContent.toLowerCase().includes(q));});
+document.getElementById('select-all-services')?.addEventListener('change',e=>document.querySelectorAll('.service-bulk-select').forEach(box=>box.checked=e.target.checked));
+document.getElementById('delete-selected-services')?.addEventListener('click',async()=>{const ids=[...document.querySelectorAll('.service-bulk-select:checked')].map(box=>Number(box.value));if(!ids.length)return alert('Select at least one service.');if(!confirm(`Delete ${ids.length} selected service(s)? Services used in existing documents cannot be deleted.`))return;try{const res=await fetch('services.php',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({action:'bulk_delete',ids})});const data=await res.json();if(!res.ok||!data.success)throw new Error(data.error||'Delete failed');location.reload();}catch(err){alert(err.message);}});
 
 async function openSvcForm(id = null) {
     let data = { name:'', description:'', unit_price:0, unit:'item', tax_rate:18 };
