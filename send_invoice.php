@@ -147,6 +147,8 @@ try {
     $currencySymbol = (string)($cfg['currency_symbol'] ?? 'UGX ');
     $companyName    = (string)($cfg['company_name'] ?? 'Unihub Solutions Uganda');
     $companyTagline = trim((string)($cfg['company_tagline'] ?? ''));
+    $brandPrimaryColor = preg_match('/^#[0-9a-fA-F]{6}$/', (string)($cfg['brand_primary_color'] ?? '')) ? $cfg['brand_primary_color'] : '#1a2a72';
+    $brandAccentColor = preg_match('/^#[0-9a-fA-F]{6}$/', (string)($cfg['brand_accent_color'] ?? '')) ? $cfg['brand_accent_color'] : '#fc7f10';
     $companyAddress = (string)($cfg['company_address'] ?? '');
     $companyPhone   = (string)($cfg['company_phone'] ?? '');
     $companyEmail   = (string)($cfg['company_email'] ?? '');
@@ -591,6 +593,9 @@ CSS;
         <?= $sharedCss ?>
 
         <?= $pdfCss ?>
+        .uh-header{background:#fff!important;border-bottom:2px solid <?= h($brandPrimaryColor) ?>}
+        .uh-wordmark-main{color:<?= h($brandPrimaryColor) ?>!important}
+        .uh-company-tagline{color:<?= h($brandAccentColor) ?>!important}
     </style>
 </head>
 <body>
