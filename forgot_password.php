@@ -46,7 +46,7 @@ function fp_h($value): string { return htmlspecialchars((string)$value, ENT_QUOT
 ?>
 <!doctype html><html lang="en"><head>
 <meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
-<title>Forgot password - Unihub Solutions</title><link rel="icon" href="assets/img/favicon.png" type="image/png">
+<title>Forgot password - Unihub Solutions</title><link rel="icon" href="favicon.php?v=<?= (int)@filemtime(__DIR__ . '/favicon.php') ?>" type="image/png">
 <link rel="stylesheet" href="assets/css/style.css?v=<?= (int)@filemtime(__DIR__ . '/assets/css/style.css') ?>">
 </head><body class="login-page"><main class="login-card auth-card">
 <div class="login-card-brand auth-brand"><img class="auth-logo" src="assets/img/logo.png" alt="Unihub Solutions"><div><span class="brand-name">Reset your password</span><span class="brand-sub">We’ll email a secure reset link.</span></div></div>

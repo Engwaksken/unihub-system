@@ -39,7 +39,8 @@ $requiredKeys = [
     'invoice_footer','invoice_prefix','order_prefix','receipt_prefix',
     'payment_terms','vat_rate','bank_name','account_name',
     'account_number','bank_branch','company_logo','company_favicon',
-    'efris_enabled','efris_environment','efris_taxpayer_type','efris_branch_id','efris_device_id'
+    'efris_enabled','efris_environment','efris_taxpayer_type','efris_branch_id','efris_device_id',
+    'brand_primary_color','brand_accent_color','brand_font_family'
 ];
 
 ensureSettingsKeys($pdo, $requiredKeys);
@@ -69,6 +70,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         $accountName    = trim($_POST['account_name']    ?? '');
         $accountNumber  = trim($_POST['account_number']  ?? '');
         $bankBranch     = trim($_POST['bank_branch']     ?? '');
+        $brandPrimaryColor = trim((string)($_POST['brand_primary_color'] ?? '#1a2a72'));
+        $brandAccentColor = trim((string)($_POST['brand_accent_color'] ?? '#fc7f10'));
+        $brandFontFamily = trim((string)($_POST['brand_font_family'] ?? 'DM Sans'));
         $efrisEnabled   = $canManageEfris ? (isset($_POST['efris_enabled']) ? '1' : '0') : setting_value($storedEfrisSettings, 'efris_enabled', '0');
         $efrisEnvironment = $canManageEfris ? trim((string)($_POST['efris_environment'] ?? 'uat')) : setting_value($storedEfrisSettings, 'efris_environment', 'uat');
         $efrisTaxpayerType = $canManageEfris ? trim((string)($_POST['efris_taxpayer_type'] ?? 'vat_registered')) : setting_value($storedEfrisSettings, 'efris_taxpayer_type', 'vat_registered');
@@ -82,6 +86,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             throw new RuntimeException('Payment terms must be a number.');
         if ($vatRate !== '' && !is_numeric($vatRate))
             throw new RuntimeException('VAT rate must be a number.');
+        foreach ([$brandPrimaryColor, $brandAccentColor] as $brandColor) if (!preg_match('/^#[0-9a-fA-F]{6}$/', $brandColor)) throw new RuntimeException('Brand colors must be valid six-digit hex colors.');
+        if (!in_array($brandFontFamily, ['DM Sans', 'Arial', 'Georgia', 'System'], true)) throw new RuntimeException('Select a supported font family.');
         if (!in_array($efrisEnvironment, ['uat', 'production'], true)) throw new RuntimeException('Select a valid EFRIS environment.');
         if (!in_array($efrisTaxpayerType, ['vat_registered', 'non_vat_registered'], true)) throw new RuntimeException('Select a valid EFRIS taxpayer type.');
         if (strlen($efrisBranchId) > 100 || strlen($efrisDeviceId) > 150) throw new RuntimeException('EFRIS branch and device identifiers are too long.');
@@ -159,6 +165,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             'bank_branch'     => $bankBranch,
             'company_logo'    => $logoPath,
             'company_favicon' => $faviconPath,
+            'brand_primary_color' => $brandPrimaryColor,
+            'brand_accent_color' => $brandAccentColor,
+            'brand_font_family' => $brandFontFamily,
         ] as $k => $v) saveSetting($pdo, $k, $v);
         if ($canManageEfris) {
             foreach ([
@@ -200,6 +209,7 @@ include 'includes/header.php';
 <div class="settings-tabs" role="tablist" aria-label="Settings sections">
     <button type="button" class="settings-tab active" role="tab" aria-selected="true" aria-controls="settings-company">Company Information</button>
     <button type="button" class="settings-tab" role="tab" aria-selected="false" aria-controls="settings-logo">Company Logo</button>
+    <button type="button" class="settings-tab" role="tab" aria-selected="false" aria-controls="settings-branding">Branding &amp; Fonts</button>
     <button type="button" class="settings-tab" role="tab" aria-selected="false" aria-controls="settings-bank">Bank Details</button>
     <button type="button" class="settings-tab" role="tab" aria-selected="false" aria-controls="settings-invoice">Invoice &amp; Receipt Settings</button>
     <?php if ($canManageEfris): ?><button type="button" class="settings-tab" role="tab" aria-selected="false" aria-controls="settings-efris">Uganda EFRIS</button><?php endif; ?>
@@ -365,6 +375,15 @@ include 'includes/header.php';
                 </div>
             </div>
         </div>
+    </div>
+
+    <div class="settings-card settings-panel" id="settings-branding" role="tabpanel" hidden>
+        <div class="settings-card-header"><span class="settings-card-title">Branding &amp; Fonts</span></div>
+        <div class="settings-card-body"><div class="form-grid">
+            <div class="form-group"><label for="brand_primary_color">Primary brand color</label><input type="color" id="brand_primary_color" name="brand_primary_color" value="<?= h(setting_value($settings, 'brand_primary_color', '#1a2a72')) ?>"></div>
+            <div class="form-group"><label for="brand_accent_color">Accent color</label><input type="color" id="brand_accent_color" name="brand_accent_color" value="<?= h(setting_value($settings, 'brand_accent_color', '#fc7f10')) ?>"></div>
+            <div class="form-group"><label for="brand_font_family">Application font</label><select id="brand_font_family" name="brand_font_family"><?php foreach (['DM Sans','Arial','Georgia','System'] as $font): ?><option value="<?= h($font) ?>" <?= setting_value($settings, 'brand_font_family', 'DM Sans') === $font ? 'selected' : '' ?>><?= h($font) ?></option><?php endforeach; ?></select></div>
+        </div></div>
     </div>
 
     <?php if ($canManageEfris): ?><div class="settings-card settings-panel" id="settings-efris" role="tabpanel" hidden>

@@ -123,7 +123,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     <meta charset="UTF-8">
     <title>Login - Unihub Solutions</title>
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <link rel="icon" href="assets/img/favicon.png?v=<?= (int)@filemtime(__DIR__ . '/assets/img/favicon.png') ?>" type="image/png">
+    <link rel="icon" href="favicon.php?v=<?= (int)@filemtime(__DIR__ . '/favicon.php') ?>" type="image/png">
 
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
 

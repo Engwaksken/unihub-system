@@ -69,8 +69,7 @@ try {
     <title><?= h($pageTitle) ?> - <?= $companyName ?></title>
 
     <!-- Favicon -->
-    <?php $faviconPath = $cfg['company_favicon'] ?? 'assets/img/favicon.png'; $faviconFile = __DIR__ . '/../' . ltrim($faviconPath, '/'); if (!is_file($faviconFile)) $faviconPath = 'assets/img/favicon.png'; ?>
-    <link rel="icon" href="<?= h($faviconPath) ?>?v=<?= (int)@filemtime($faviconFile) ?>" type="<?= str_ends_with(strtolower($faviconPath), '.ico') ? 'image/x-icon' : (str_ends_with(strtolower($faviconPath), '.svg') ? 'image/svg+xml' : 'image/png') ?>">
+    <link rel="icon" href="favicon.php?v=<?= (int)@filemtime(__DIR__ . '/../favicon.php') ?>" type="image/png">
 
     <!-- Fonts -->
     <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@300;400;500;600;700&display=swap" rel="stylesheet">
@@ -80,6 +79,13 @@ try {
 
     <!-- Main CSS -->
     <link rel="stylesheet" href="assets/css/style.css?v=<?= (int)@filemtime(__DIR__ . '/../assets/css/style.css') ?>">
+    <?php
+        $brandPrimary = preg_match('/^#[0-9a-fA-F]{6}$/', (string)($cfg['brand_primary_color'] ?? '')) ? $cfg['brand_primary_color'] : '#1a2a72';
+        $brandAccent = preg_match('/^#[0-9a-fA-F]{6}$/', (string)($cfg['brand_accent_color'] ?? '')) ? $cfg['brand_accent_color'] : '#fc7f10';
+        $fontFamilies = ['DM Sans' => "'DM Sans', system-ui, sans-serif", 'Arial' => 'Arial, sans-serif', 'Georgia' => 'Georgia, serif', 'System' => 'system-ui, sans-serif'];
+        $brandFont = $fontFamilies[(string)($cfg['brand_font_family'] ?? 'DM Sans')] ?? $fontFamilies['DM Sans'];
+    ?>
+    <style>:root{--navy:<?= h($brandPrimary) ?>;--gold:<?= h($brandAccent) ?>;--gold-light:<?= h($brandAccent) ?>;--font-sans:<?= $brandFont ?>}</style>
 </head>
 <body>
 
