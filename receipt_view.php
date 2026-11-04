@@ -115,6 +115,7 @@ $paymentMethod = ucwords(str_replace('_', ' ', (string)($rcp['payment_method'] ?
                 <div class="uh-wordmark-main">
                     <?= htmlspecialchars($companyName) ?>
                 </div>
+                <?php if (!empty($cfg['company_tagline'])): ?><div class="uh-wordmark-tagline"><?= htmlspecialchars($cfg['company_tagline']) ?></div><?php endif; ?>
                
             </div>
         </div>

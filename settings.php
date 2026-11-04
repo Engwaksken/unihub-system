@@ -34,7 +34,7 @@ if (!function_exists('saveSetting')) {
 }
 
 $requiredKeys = [
-    'company_name','company_address','company_email','company_phone',
+    'company_name','company_tagline','company_address','company_email','company_phone',
     'company_tin','company_website','currency','currency_symbol',
     'invoice_footer','invoice_prefix','order_prefix','receipt_prefix',
     'payment_terms','vat_rate','bank_name','account_name',
@@ -53,6 +53,7 @@ $error   = '';
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     try {
         $companyName    = trim($_POST['company_name']    ?? '');
+        $companyTagline = trim($_POST['company_tagline'] ?? '');
         $companyAddress = trim($_POST['company_address'] ?? '');
         $companyEmail   = trim($_POST['company_email']   ?? '');
         $companyPhone   = trim($_POST['company_phone']   ?? '');
@@ -80,6 +81,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         $efrisDeviceId  = $canManageEfris ? trim((string)($_POST['efris_device_id'] ?? '')) : setting_value($storedEfrisSettings, 'efris_device_id');
 
         if ($companyName === '') throw new RuntimeException('Company name is required.');
+        if (strlen($companyTagline) > 180) throw new RuntimeException('Company tagline must be 180 characters or fewer.');
         if ($companyEmail !== '' && !filter_var($companyEmail, FILTER_VALIDATE_EMAIL))
             throw new RuntimeException('Please enter a valid company email address.');
         if ($paymentTerms !== '' && !is_numeric($paymentTerms))
@@ -146,6 +148,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         $pdo->beginTransaction();
         foreach ([
             'company_name'    => $companyName,
+            'company_tagline' => $companyTagline,
             'company_address' => $companyAddress,
             'company_email'   => $companyEmail,
             'company_phone'   => $companyPhone,
@@ -227,6 +230,10 @@ include 'includes/header.php';
                     <label>Company Name *</label>
                     <input type="text" name="company_name" required
                            value="<?= h(setting_value($settings,'company_name')) ?>">
+                </div>
+                <div class="form-group settings-full-col">
+                    <label for="company_tagline">Company Tagline / Subtitle</label>
+                    <input type="text" id="company_tagline" name="company_tagline" maxlength="180" value="<?= h(setting_value($settings,'company_tagline')) ?>" placeholder="A short line displayed under your company name">
                 </div>
                 <div class="form-group">
                     <label>Email</label>

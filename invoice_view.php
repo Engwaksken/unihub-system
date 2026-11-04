@@ -221,6 +221,7 @@ $canVoid   = $status !== 'paid' && $status !== 'void';
                 <div class="uh-wordmark-main">
                     <?= h($companyName) ?>
                 </div>
+                <?php if (!empty($cfg['company_tagline'])): ?><div class="uh-wordmark-tagline"><?= h($cfg['company_tagline']) ?></div><?php endif; ?>
             </div>
         </div>
         <div class="uh-doc-badge">INVOICE</div>

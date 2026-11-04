@@ -139,6 +139,7 @@ body {
     color: #ffffff;
     margin-bottom: 4px;
 }
+.uh-company-tagline { color:rgba(255,255,255,.78);font-size:11px;font-style:italic;margin:-2px 0 5px; }
 
 .uh-company-muted {
     color: rgba(255,255,255,.72);
@@ -424,6 +425,7 @@ try {
 
     $currencySymbol = (string)($cfg['currency_symbol'] ?? 'UGX ');
     $companyName    = (string)($cfg['company_name'] ?? 'Unihub Solutions Uganda');
+    $companyTagline = trim((string)($cfg['company_tagline'] ?? ''));
     $companyAddress = (string)($cfg['company_address'] ?? '');
     $companyPhone   = (string)($cfg['company_phone'] ?? '');
     $companyEmail   = (string)($cfg['company_email'] ?? '');
@@ -544,6 +546,7 @@ try {
                                     </td>
                                     <td>
                                         <div class="uh-company-name"><?= h($companyName) ?></div>
+                                        <?php if ($companyTagline !== ''): ?><div class="uh-company-tagline"><?= h($companyTagline) ?></div><?php endif; ?>
                                         <div class="uh-company-muted">
                                             <?php if ($companyAddress !== ''): ?>
                                                 <?= h($companyAddress) ?><br>
