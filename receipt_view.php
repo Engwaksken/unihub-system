@@ -48,7 +48,8 @@ $companyPhone   = $cfg['company_phone']   ?? '+256 704 145 972 ';
 $companyEmail   = $cfg['company_email']   ?? '';
 $companyTin     = $cfg['company_tin']     ?? '';
 $companyWebsite = $cfg['company_website'] ?? 'www.unihubug.com';
-$logoPath       = 'assets/img/favicon.png';
+$logoPath       = trim((string)($cfg['company_logo'] ?? ''));
+if ($logoPath === '' || !is_file(__DIR__ . '/' . ltrim($logoPath, '/\\'))) $logoPath = 'assets/img/logo.png';
 
 $invoiceTotal = (float)($rcp['invoice_total'] ?? 0);
 $amountPaid   = (float)($rcp['amount_paid']   ?? 0);
@@ -112,9 +113,8 @@ $paymentMethod = ucwords(str_replace('_', ' ', (string)($rcp['payment_method'] ?
             </div>
             <div class="uh-wordmark">
                 <div class="uh-wordmark-main">
-                    <span class="or">UNI</span><span class="wh">HUB</span>
+                    <?= htmlspecialchars($companyName) ?>
                 </div>
-                <div class="uh-wordmark-sub">Solutions Uganda</div>
                
             </div>
         </div>

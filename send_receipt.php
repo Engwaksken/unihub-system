@@ -457,13 +457,17 @@ try {
 
     $amountPaid = (float)($rcp['amount_paid'] ?? 0);
 
-    $logoPath = __DIR__ . '/assets/img/logo.png';
+    $configuredLogo = trim((string)($cfg['company_logo'] ?? ''));
+    $logoPath = $configuredLogo !== '' ? realpath(__DIR__ . '/' . ltrim($configuredLogo, '/\\')) : false;
+    $assetsRoot = realpath(__DIR__ . '/assets/img');
+    if (!$logoPath || !$assetsRoot || !str_starts_with($logoPath, $assetsRoot . DIRECTORY_SEPARATOR) || !is_file($logoPath)) $logoPath = __DIR__ . '/assets/img/logo.png';
     $logoDataUri = '';
     if (is_file($logoPath)) {
         $logoExt = strtolower((string)pathinfo($logoPath, PATHINFO_EXTENSION));
         $logoMime = match ($logoExt) {
             'jpg', 'jpeg' => 'image/jpeg',
             'webp'        => 'image/webp',
+            'svg'         => 'image/svg+xml',
             default       => 'image/png',
         };
         $logoData = file_get_contents($logoPath);

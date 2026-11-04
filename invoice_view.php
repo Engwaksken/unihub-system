@@ -170,7 +170,8 @@ include 'includes/header.php';
 
 $currency    = $cfg['currency_symbol'] ?? 'UGX ';
 $companyName = $cfg['company_name']    ?? 'Unihub Solutions Uganda';
-$logoPath    = 'assets/img/favicon.png';
+$logoPath    = trim((string)($cfg['company_logo'] ?? ''));
+if ($logoPath === '' || !is_file(__DIR__ . '/' . ltrim($logoPath, '/\\'))) $logoPath = 'assets/img/logo.png';
 $status      = strtolower((string)$inv['status']);
 
 $statusLabel = strtoupper($inv['status']);
@@ -218,9 +219,8 @@ $canVoid   = $status !== 'paid' && $status !== 'void';
             </div>
             <div class="uh-wordmark">
                 <div class="uh-wordmark-main">
-                    <span class="or">UNI</span><span class="wh">HUB</span>
+                    <?= h($companyName) ?>
                 </div>
-                <div class="uh-wordmark-sub">Solutions Uganda</div>
             </div>
         </div>
         <div class="uh-doc-badge">INVOICE</div>

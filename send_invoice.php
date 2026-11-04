@@ -152,7 +152,11 @@ try {
     $companyTin     = (string)($cfg['company_tin'] ?? '');
     $companyWebsite = (string)($cfg['company_website'] ?? 'www.unihubug.com');
 
-    $logoDataUri = assetDataUri(__DIR__ . '/assets/img/logo.png');
+    $configuredLogo = trim((string)($cfg['company_logo'] ?? ''));
+    $logoFile = $configuredLogo !== '' ? realpath(__DIR__ . '/' . ltrim($configuredLogo, '/\\')) : false;
+    $assetsRoot = realpath(__DIR__ . '/assets/img');
+    if (!$logoFile || !$assetsRoot || !str_starts_with($logoFile, $assetsRoot . DIRECTORY_SEPARATOR) || !is_file($logoFile)) $logoFile = __DIR__ . '/assets/img/logo.png';
+    $logoDataUri = assetDataUri($logoFile);
 
     $status = strtolower((string)($inv['status'] ?? 'pending'));
     $statusLabel = strtoupper((string)($inv['status'] ?? 'PENDING'));
@@ -611,9 +615,8 @@ CSS;
                                     </td>
                                     <td class="uh-wordmark">
                                         <div class="uh-wordmark-main">
-                                            <span class="or">UNI</span><span class="wh">HUB</span>
+                                            <?= h($companyName) ?>
                                         </div>
-                                        <div class="uh-wordmark-sub">Solutions Uganda</div>
                                     </td>
                                 </tr>
                             </table>
