@@ -69,7 +69,8 @@ try {
     <title><?= h($pageTitle) ?> - <?= $companyName ?></title>
 
     <!-- Favicon -->
-    <link rel="icon" href="assets/img/favicon.png">
+    <?php $faviconPath = $cfg['company_favicon'] ?? 'assets/img/favicon.png'; $faviconFile = __DIR__ . '/../' . ltrim($faviconPath, '/'); if (!is_file($faviconFile)) $faviconPath = 'assets/img/favicon.png'; ?>
+    <link rel="icon" href="<?= h($faviconPath) ?>?v=<?= (int)@filemtime($faviconFile) ?>" type="<?= str_ends_with(strtolower($faviconPath), '.ico') ? 'image/x-icon' : (str_ends_with(strtolower($faviconPath), '.svg') ? 'image/svg+xml' : 'image/png') ?>">
 
     <!-- Fonts -->
     <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@300;400;500;600;700&display=swap" rel="stylesheet">

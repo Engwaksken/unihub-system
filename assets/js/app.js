@@ -59,6 +59,53 @@ function filterTable(inputId, tableId) {
     });
 }
 
+// Lightweight paging and inclusive date-period filters for long list tables.
+document.addEventListener('DOMContentLoaded', () => {
+    document.querySelectorAll('table[data-client-pagination]').forEach(table => {
+        const rows = [...table.querySelectorAll('tbody tr')].filter(row => row.cells.length > 1);
+        if (!rows.length) return;
+        const controls = document.createElement('div');
+        controls.className = 'users-pagination table-pagination-controls';
+        controls.style.cssText = 'display:flex;gap:8px;align-items:center;justify-content:flex-end;flex-wrap:wrap;margin:12px 0';
+        const dateColumn = Number(table.dataset.dateColumn);
+        if (Number.isInteger(dateColumn) && dateColumn >= 0) {
+            controls.innerHTML = '<label>From <input type="date" class="table-date-from"></label><label>To <input type="date" class="table-date-to"></label>';
+        }
+        const prev = document.createElement('button'); prev.type = 'button'; prev.className = 'btn btn-ghost btn-sm'; prev.textContent = 'Previous';
+        const info = document.createElement('span'); info.className = 'users-page-info';
+        const next = document.createElement('button'); next.type = 'button'; next.className = 'btn btn-ghost btn-sm'; next.textContent = 'Next';
+        controls.append(prev, info, next);
+        table.closest('.table-wrap').after(controls);
+        let page = 1;
+        const dateVal = text => {
+            const s = text.trim();
+            let m = s.match(/^(\d{1,2})[\/.-](\d{1,2})[\/.-](\d{4})$/);
+            if (m) return `${m[3]}-${m[2].padStart(2,'0')}-${m[1].padStart(2,'0')}`;
+            m = s.match(/^(\d{1,2})\s+([A-Za-z]{3})\s+(\d{4})$/);
+            if (m) { const d = new Date(`${m[2]} 1, 2000`); if (!Number.isNaN(+d)) return `${m[3]}-${String(d.getMonth()+1).padStart(2,'0')}-${m[1].padStart(2,'0')}`; }
+            return /^\d{4}-\d{2}-\d{2}/.test(s) ? s.slice(0,10) : '';
+        };
+        const draw = () => {
+            const q = table.id === 'clients-table' ? (document.getElementById('client-search')?.value || '').toLowerCase() : table.id === 'svc-table' ? (document.getElementById('svc-search')?.value || '').toLowerCase() : (document.getElementById('ord-search')?.value || '').toLowerCase();
+            const from = controls.querySelector('.table-date-from')?.value || '', to = controls.querySelector('.table-date-to')?.value || '';
+            const visible = rows.filter(row => {
+                const date = Number.isInteger(dateColumn) ? dateVal(row.cells[dateColumn]?.textContent || '') : '';
+                return row.textContent.toLowerCase().includes(q) && (!from || (date && date >= from)) && (!to || (date && date <= to));
+            });
+            const pages = Math.max(1, Math.ceil(visible.length / 20)); page = Math.min(page, pages);
+            rows.forEach(row => row.hidden = true);
+            visible.slice((page-1)*20, page*20).forEach(row => row.hidden = false);
+            info.textContent = `Page ${page} of ${pages} · ${visible.length} records`;
+            prev.disabled = page <= 1; next.disabled = page >= pages;
+        };
+        prev.addEventListener('click', () => { page--; draw(); }); next.addEventListener('click', () => { page++; draw(); });
+        controls.querySelectorAll('input').forEach(input => input.addEventListener('change', () => { page = 1; draw(); }));
+        const search = document.getElementById(table.id === 'clients-table' ? 'client-search' : table.id === 'svc-table' ? 'svc-search' : 'ord-search');
+        search?.addEventListener('input', () => { page = 1; draw(); });
+        draw();
+    });
+});
+
 // ---- FORMAT NUMBER -----------------------------------------
 function fmt(n) {
     return 'UGX ' + parseFloat(n || 0).toLocaleString('en-UG', { minimumFractionDigits: 0, maximumFractionDigits: 0 });

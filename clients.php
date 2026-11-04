@@ -108,7 +108,7 @@ include 'includes/header.php';
     </div>
 
     <div class="table-wrap">
-        <table id="clients-table">
+        <table id="clients-table" data-client-pagination>
             <thead>
                 <tr>
                     <th>#</th><th>Name</th><th>Company</th><th>Email</th><th>Phone</th><th>Orders</th><th>Actions</th>

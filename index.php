@@ -74,7 +74,14 @@ include 'includes/header.php';
 
 <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(320px,1fr));gap:20px;margin-top:4px">
 
-    <div class="card">
+    <div class="card dashboard-recent-tabs" style="grid-column:1/-1">
+        <div class="dashboard-tab-list" role="tablist" aria-label="Recent records">
+            <button type="button" role="tab" id="recent-orders-tab" aria-controls="recent-orders-panel" aria-selected="true" class="dashboard-tab active">Recent Orders</button>
+            <button type="button" role="tab" id="recent-invoices-tab" aria-controls="recent-invoices-panel" aria-selected="false" class="dashboard-tab">Recent Invoices</button>
+        </div>
+    </div>
+
+    <div class="card dashboard-recent-panel" id="recent-orders-panel" role="tabpanel" aria-labelledby="recent-orders-tab">
         <div class="card-header">
             <span class="card-title">
                 <i class="fas fa-cart-shopping"></i>
@@ -105,7 +112,7 @@ include 'includes/header.php';
                             </a>
                         </td>
                         <td><?= htmlspecialchars((string)$o['client_name']) ?></td>
-                        <td><?= !empty($o['order_date']) ? date('d/m/Y', strtotime((string)$o['order_date'])) : '—' ?></td>
+                        <td><?= !empty($o['order_date']) ? date('d/m/Y', strtotime((string)$o['order_date'])) : 'ï¿½' ?></td>
                         <td>
                             <span class="badge badge-<?= htmlspecialchars((string)$o['status']) ?>">
                                 <?= ucfirst(htmlspecialchars((string)$o['status'])) ?>
@@ -127,7 +134,7 @@ include 'includes/header.php';
         </div>
     </div>
 
-    <div class="card">
+    <div class="card dashboard-recent-panel" id="recent-invoices-panel" role="tabpanel" aria-labelledby="recent-invoices-tab" hidden>
         <div class="card-header">
             <span class="card-title">
                 <i class="fas fa-file-invoice-dollar"></i>
@@ -181,6 +188,13 @@ include 'includes/header.php';
     </div>
 
 </div>
+
+<style>
+.dashboard-recent-tabs{margin-bottom:-18px;padding:0 18px}.dashboard-tab-list{display:flex;gap:8px;border-bottom:1px solid var(--border)}.dashboard-tab{border:0;background:transparent;color:var(--text-muted);padding:14px 16px;font:inherit;font-weight:600;cursor:pointer;border-bottom:2px solid transparent}.dashboard-tab.active{color:var(--navy);border-color:var(--gold)}
+</style>
+<script>
+document.querySelectorAll('.dashboard-tab').forEach(tab=>tab.addEventListener('click',()=>{document.querySelectorAll('.dashboard-tab').forEach(t=>{t.classList.toggle('active',t===tab);t.setAttribute('aria-selected',t===tab?'true':'false');});document.querySelectorAll('.dashboard-recent-panel').forEach(panel=>panel.hidden=panel.id!==tab.getAttribute('aria-controls'));}));
+</script>
 
 <div style="display:flex;gap:12px;margin-top:20px;flex-wrap:wrap">
     <a href="orders.php?new=1" class="btn btn-primary">

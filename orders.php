@@ -231,7 +231,7 @@ include 'includes/header.php';
     </div>
 
     <div class="table-wrap">
-        <table id="orders-table">
+        <table id="orders-table" data-client-pagination data-date-column="2">
             <thead>
             <tr>
                 <th>Order #</th><th>Client</th><th>Date</th><th>Due</th><th>Items</th><th>Status</th><th>Invoice</th><th>Actions</th>

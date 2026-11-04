@@ -18,6 +18,8 @@ if (!function_exists('h')) {
 $statusFilter = trim($_GET['status'] ?? '');
 $typeFilter   = trim($_GET['type']   ?? '');
 $search       = trim($_GET['q']      ?? '');
+$dateFrom     = trim($_GET['date_from'] ?? '');
+$dateTo       = trim($_GET['date_to'] ?? '');
 $page         = max(1, (int)($_GET['page'] ?? 1));
 $perPage      = 20;
 $offset       = ($page - 1) * $perPage;
@@ -25,6 +27,8 @@ $offset       = ($page - 1) * $perPage;
 $where = []; $params = [];
 if ($statusFilter !== '') { $where[] = 'status = :status';         $params[':status']     = $statusFilter; }
 if ($typeFilter   !== '') { $where[] = 'email_type = :email_type'; $params[':email_type'] = $typeFilter; }
+if (preg_match('/^\d{4}-\d{2}-\d{2}$/', $dateFrom)) { $where[] = 'created_at >= :date_from'; $params[':date_from'] = $dateFrom . ' 00:00:00'; }
+if (preg_match('/^\d{4}-\d{2}-\d{2}$/', $dateTo)) { $where[] = 'created_at <= :date_to'; $params[':date_to'] = $dateTo . ' 23:59:59'; }
 if ($search       !== '') {
     $where[] = '(recipient_email LIKE :s_email OR recipient_name LIKE :s_name OR subject LIKE :s_subject OR attachment_path LIKE :s_attachment OR error_message LIKE :s_error)';
     foreach (['email', 'name', 'subject', 'attachment', 'error'] as $field) {
@@ -92,6 +96,8 @@ include __DIR__ . '/includes/header.php';
             <option value="receipt" <?= $typeFilter==='receipt'?'selected':'' ?>>Receipt</option>
             <option value="other"   <?= $typeFilter==='other'  ?'selected':'' ?>>Other</option>
         </select>
+        <label>From <input type="date" name="date_from" value="<?= h($dateFrom) ?>"></label>
+        <label>To <input type="date" name="date_to" value="<?= h($dateTo) ?>"></label>
         <button class="btn btn-primary btn-sm" type="submit">Filter</button>
         <a href="email_logs.php" class="btn btn-ghost btn-sm">Reset</a>
     </form>

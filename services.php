@@ -56,7 +56,7 @@ include 'includes/header.php';
         <input class="search-input" id="svc-search" placeholder="Search services…">
     </div>
     <div class="table-wrap">
-        <table id="svc-table">
+        <table id="svc-table" data-client-pagination>
             <thead>
                 <tr>
                     <th>Service / Product</th>

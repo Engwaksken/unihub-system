@@ -35,7 +35,7 @@ include __DIR__ . '/includes/header.php';
         </article>
     <?php else: ?>
         <div class="section-header"><span class="section-title">Delivery Notes</span></div>
-        <div class="card"><div class="table-wrap"><table class="data-table"><thead><tr><th>Order #</th><th>Client</th><th>Order date</th><th>Status</th><th>Actions</th></tr></thead><tbody><?php foreach ($orders as $row): ?><tr><td><?= h($row['order_number']) ?></td><td><?= h($row['client_name']) ?></td><td><?= h(date('d M Y', strtotime((string)$row['order_date']))) ?></td><td><?= h(ucfirst((string)$row['status'])) ?></td><td><a class="btn btn-ghost btn-sm" href="delivery_notes.php?view=<?= (int)$row['id'] ?>"><i class="fas fa-eye"></i> View / Print</a></td></tr><?php endforeach; ?><?php if (!$orders): ?><tr><td colspan="5">No orders available to create delivery notes.</td></tr><?php endif; ?></tbody></table></div></div>
+        <div class="card"><div class="table-wrap"><table class="data-table" data-client-pagination data-date-column="2"><thead><tr><th>Order #</th><th>Client</th><th>Order date</th><th>Status</th><th>Actions</th></tr></thead><tbody><?php foreach ($orders as $row): ?><tr><td><?= h($row['order_number']) ?></td><td><?= h($row['client_name']) ?></td><td><?= h(date('d M Y', strtotime((string)$row['order_date']))) ?></td><td><?= h(ucfirst((string)$row['status'])) ?></td><td><a class="btn btn-ghost btn-sm" href="delivery_notes.php?view=<?= (int)$row['id'] ?>"><i class="fas fa-eye"></i> View / Print</a></td></tr><?php endforeach; ?><?php if (!$orders): ?><tr><td colspan="5">No orders available to create delivery notes.</td></tr><?php endif; ?></tbody></table></div></div>
     <?php endif; ?>
 </section>
 <style>

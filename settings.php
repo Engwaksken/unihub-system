@@ -38,7 +38,7 @@ $requiredKeys = [
     'company_tin','company_website','currency','currency_symbol',
     'invoice_footer','invoice_prefix','order_prefix','receipt_prefix',
     'payment_terms','vat_rate','bank_name','account_name',
-    'account_number','bank_branch','company_logo'
+    'account_number','bank_branch','company_logo','company_favicon'
 ];
 
 ensureSettingsKeys($pdo, $requiredKeys);
@@ -76,6 +76,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             throw new RuntimeException('VAT rate must be a number.');
 
         $logoPath = trim($_POST['existing_company_logo'] ?? '');
+        $faviconPath = trim($_POST['existing_company_favicon'] ?? 'assets/img/favicon.png');
 
         if (!empty($_FILES['company_logo_file']['name'])) {
             $file = $_FILES['company_logo_file'];
@@ -109,6 +110,22 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             $logoPath = 'assets/img/uploads/settings/' . $fileName;
         }
 
+        if (!empty($_FILES['company_favicon_file']['name'])) {
+            $file = $_FILES['company_favicon_file'];
+            if (($file['error'] ?? UPLOAD_ERR_NO_FILE) !== UPLOAD_ERR_OK || !is_uploaded_file($file['tmp_name'] ?? '')) throw new RuntimeException('Favicon upload failed.');
+            if ($file['size'] > 1024 * 1024) throw new RuntimeException('Favicon must be 1 MB or smaller.');
+            $finfo = finfo_open(FILEINFO_MIME_TYPE);
+            $mime = finfo_file($finfo, $file['tmp_name']);
+            finfo_close($finfo);
+            $allowedFavicon = ['image/png'=>'png','image/x-icon'=>'ico','image/vnd.microsoft.icon'=>'ico','image/svg+xml'=>'svg'];
+            if (!isset($allowedFavicon[$mime])) throw new RuntimeException('Favicon must be PNG, ICO or SVG.');
+            $dir = __DIR__ . '/assets/img/uploads/settings';
+            if (!is_dir($dir) && !mkdir($dir, 0775, true)) throw new RuntimeException('Failed to create favicon upload directory.');
+            $filename = 'favicon_' . date('Ymd_His') . '_' . bin2hex(random_bytes(4)) . '.' . $allowedFavicon[$mime];
+            if (!move_uploaded_file($file['tmp_name'], $dir . '/' . $filename)) throw new RuntimeException('Failed to save favicon.');
+            $faviconPath = 'assets/img/uploads/settings/' . $filename;
+        }
+
         $pdo->beginTransaction();
         foreach ([
             'company_name'    => $companyName,
@@ -130,6 +147,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             'account_number'  => $accountNumber,
             'bank_branch'     => $bankBranch,
             'company_logo'    => $logoPath,
+            'company_favicon' => $faviconPath,
         ] as $k => $v) saveSetting($pdo, $k, $v);
         $pdo->commit();
 
@@ -142,6 +160,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
 $settings    = getSettings();
 $currentLogo = setting_value($settings, 'company_logo');
+$currentFavicon = setting_value($settings, 'company_favicon', 'assets/img/favicon.png');
 $pageTitle   = 'System Settings';
 include 'includes/header.php';
 ?>
@@ -158,10 +177,16 @@ include 'includes/header.php';
 <?php endif; ?>
 
 <form method="post" enctype="multipart/form-data">
+<div class="settings-tabs" role="tablist" aria-label="Settings sections">
+    <button type="button" class="settings-tab active" role="tab" aria-selected="true" aria-controls="settings-company">Company Information</button>
+    <button type="button" class="settings-tab" role="tab" aria-selected="false" aria-controls="settings-logo">Company Logo</button>
+    <button type="button" class="settings-tab" role="tab" aria-selected="false" aria-controls="settings-bank">Bank Details</button>
+    <button type="button" class="settings-tab" role="tab" aria-selected="false" aria-controls="settings-invoice">Invoice &amp; Receipt Settings</button>
+</div>
 <div class="settings-grid">
 
     <!-- Company Information -->
-    <div class="settings-card">
+    <div class="settings-card settings-panel active" id="settings-company" role="tabpanel">
         <div class="settings-card-header">
             <span class="settings-card-title">Company Information</span>
         </div>
@@ -201,7 +226,7 @@ include 'includes/header.php';
     </div>
 
     <!-- Logo -->
-    <div class="settings-card">
+    <div class="settings-card settings-panel" id="settings-logo" role="tabpanel" hidden>
         <div class="settings-card-header">
             <span class="settings-card-title">Company Logo</span>
         </div>
@@ -214,6 +239,12 @@ include 'includes/header.php';
                         <span class="settings-logo-placeholder" id="logoPreviewPlaceholder">No logo</span>
                         <img src="" alt="Logo" id="logoPreviewImage" class="settings-logo-hidden">
                     <?php endif; ?>
+                </div>
+                <div class="form-group">
+                    <label>Favicon (PNG, ICO or SVG)</label>
+                    <input type="file" name="company_favicon_file" accept=".png,.ico,.svg,image/png,image/x-icon,image/svg+xml">
+                    <input type="hidden" name="existing_company_favicon" value="<?= h($currentFavicon) ?>">
+                    <?php if ($currentFavicon && is_file(__DIR__ . '/' . ltrim($currentFavicon, '/'))): ?><img src="<?= h($currentFavicon) ?>" alt="Current favicon" style="width:40px;height:40px;object-fit:contain;margin-top:8px"><?php endif; ?>
                 </div>
                 <div class="settings-logo-fields">
                     <div class="form-group">
@@ -235,7 +266,7 @@ include 'includes/header.php';
     </div>
 
     <!-- Bank Details -->
-    <div class="settings-card">
+    <div class="settings-card settings-panel" id="settings-bank" role="tabpanel" hidden>
         <div class="settings-card-header">
             <span class="settings-card-title">Bank Details</span>
         </div>
@@ -266,7 +297,7 @@ include 'includes/header.php';
     </div>
 
     <!-- Invoice & Receipt -->
-    <div class="settings-card">
+    <div class="settings-card settings-panel" id="settings-invoice" role="tabpanel" hidden>
         <div class="settings-card-header">
             <span class="settings-card-title">Invoice &amp; Receipt Settings</span>
         </div>
@@ -326,8 +357,15 @@ include 'includes/header.php';
 </div><!-- /.settings-grid -->
 </form>
 
+<style>
+.settings-tabs{display:flex;gap:6px;overflow-x:auto;border-bottom:1px solid var(--border);margin-bottom:18px}.settings-tab{flex:0 0 auto;padding:12px 16px;border:0;border-bottom:2px solid transparent;background:transparent;color:var(--text-muted);font:inherit;font-weight:600;cursor:pointer}.settings-tab.active{color:var(--navy);border-bottom-color:var(--gold)}.settings-panel[hidden]{display:none!important}
+</style>
 <script>
 (function () {
+    const tabs = [...document.querySelectorAll('.settings-tab')];
+    tabs.forEach(tab => tab.addEventListener('click', () => {
+        tabs.forEach(item => { const active = item === tab; item.classList.toggle('active', active); item.setAttribute('aria-selected', active ? 'true' : 'false'); document.getElementById(item.getAttribute('aria-controls')).hidden = !active; });
+    }));
     const fileInput   = document.getElementById('company_logo_file');
     const manualInput = document.getElementById('company_logo_manual');
     const hiddenPath  = document.querySelector('input[name="existing_company_logo"]');
