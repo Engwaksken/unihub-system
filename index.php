@@ -190,7 +190,7 @@ include 'includes/header.php';
 </div>
 
 <style>
-.dashboard-recent-tabs{margin-bottom:-18px;padding:0 18px}.dashboard-tab-list{display:flex;gap:8px;border-bottom:1px solid var(--border)}.dashboard-tab{border:0;background:transparent;color:var(--text-muted);padding:14px 16px;font:inherit;font-weight:600;cursor:pointer;border-bottom:2px solid transparent}.dashboard-tab.active{color:var(--navy);border-color:var(--gold)}
+.dashboard-recent-tabs{grid-column:1/-1;width:100%;box-sizing:border-box;margin-bottom:-18px;padding:0 18px}.dashboard-tab-list{display:flex;width:100%;gap:8px;border-bottom:1px solid var(--border)}.dashboard-tab{flex:1 1 0;min-width:0;border:0;background:transparent;color:var(--text-muted);padding:14px 16px;font:inherit;font-weight:600;cursor:pointer;border-bottom:2px solid transparent;text-align:center}.dashboard-tab.active{color:var(--navy);border-color:var(--gold)}
 </style>
 <script>
 document.querySelectorAll('.dashboard-tab').forEach(tab=>tab.addEventListener('click',()=>{document.querySelectorAll('.dashboard-tab').forEach(t=>{t.classList.toggle('active',t===tab);t.setAttribute('aria-selected',t===tab?'true':'false');});document.querySelectorAll('.dashboard-recent-panel').forEach(panel=>panel.hidden=panel.id!==tab.getAttribute('aria-controls'));}));

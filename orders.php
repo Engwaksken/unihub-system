@@ -228,10 +228,13 @@ include 'includes/header.php';
 <div class="card" id="orders-list">
     <div class="filter-bar">
         <input class="search-input" id="ord-search" placeholder="Search orders…">
+        <label>From <input type="date" id="orders-date-from" value="<?= htmlspecialchars((string)($_GET['date_from'] ?? ''), ENT_QUOTES, 'UTF-8') ?>"></label>
+        <label>To <input type="date" id="orders-date-to" value="<?= htmlspecialchars((string)($_GET['date_to'] ?? ''), ENT_QUOTES, 'UTF-8') ?>"></label>
+        <button type="button" class="btn btn-ghost btn-sm" id="clear-orders-period">Clear dates</button>
     </div>
 
     <div class="table-wrap">
-        <table id="orders-table" data-client-pagination data-date-column="2">
+        <table id="orders-table">
             <thead>
             <tr>
                 <th>Order #</th><th>Client</th><th>Date</th><th>Due</th><th>Items</th><th>Status</th><th>Invoice</th><th>Actions</th>
@@ -240,7 +243,7 @@ include 'includes/header.php';
 
             <tbody>
             <?php foreach ($orders as $o): ?>
-                <tr>
+                <tr data-order-date="<?= htmlspecialchars((string)($o['order_date'] ?? ''), ENT_QUOTES, 'UTF-8') ?>">
                     <td>
                         <strong style="color:var(--gold)">
                             <?= htmlspecialchars($o['order_number']) ?>
@@ -310,11 +313,40 @@ include 'includes/header.php';
             </tbody>
         </table>
     </div>
+    <nav class="users-pagination" id="orders-pagination" aria-label="Order pages"></nav>
 </div>
 
 <script>
 window.__services = <?= json_encode($services) ?>;
-filterTable('ord-search', 'orders-table');
+
+(() => {
+    const table = document.getElementById('orders-table');
+    const rows = [...table.querySelectorAll('tbody tr[data-order-date]')];
+    const search = document.getElementById('ord-search');
+    const from = document.getElementById('orders-date-from');
+    const to = document.getElementById('orders-date-to');
+    const pagination = document.getElementById('orders-pagination');
+    const pageSize = 20; let page = 1;
+    function render() {
+        const query = search.value.trim().toLowerCase();
+        const matches = rows.filter(row => {
+            const date = row.dataset.orderDate || '';
+            return row.textContent.toLowerCase().includes(query) && (!from.value || date >= from.value) && (!to.value || date <= to.value);
+        });
+        const pages = Math.max(1, Math.ceil(matches.length / pageSize)); page = Math.min(page, pages);
+        rows.forEach(row => row.hidden = true);
+        matches.slice((page - 1) * pageSize, page * pageSize).forEach(row => row.hidden = false);
+        pagination.replaceChildren();
+        const prev = document.createElement('button'); prev.type = 'button'; prev.className = 'btn btn-ghost btn-sm'; prev.textContent = 'Previous'; prev.disabled = page <= 1;
+        const status = document.createElement('span'); status.className = 'users-page-info'; status.textContent = `Page ${page} of ${pages} · ${matches.length} orders`;
+        const next = document.createElement('button'); next.type = 'button'; next.className = 'btn btn-ghost btn-sm'; next.textContent = 'Next'; next.disabled = page >= pages;
+        prev.onclick = () => { page--; render(); }; next.onclick = () => { page++; render(); };
+        pagination.append(prev, status, next);
+    }
+    [search, from, to].forEach(input => input.addEventListener('input', () => { page = 1; render(); }));
+    document.getElementById('clear-orders-period').addEventListener('click', () => { from.value = ''; to.value = ''; page = 1; render(); });
+    render();
+})();
 
 function openOrderForm() {
     document.getElementById('order-form-wrap').style.display = 'block';
