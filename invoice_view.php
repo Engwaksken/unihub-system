@@ -412,7 +412,7 @@ $canVoid   = $status !== 'paid' && $status !== 'void';
 
     <!-- ── FOOTER BAND ── -->
     <div class="uh-footer">
-        <span class="left">This is a computer-generated invoice . <?= h($companyName) ?></span>
+        <span class="left"><?= h($companyName) ?></span>
         <span class="right"><?= h($cfg['company_website'] ?? 'www.unihubug.com') ?> . <?= h($cfg['company_phone'] ?? '+256 700 000 000') ?></span>
     </div>
 

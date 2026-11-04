@@ -829,7 +829,7 @@ CSS;
             <div class="uh-footer">
                 <table class="uh-footer-table">
                     <tr>
-                        <td class="uh-footer-left">This is a computer-generated invoice . <?= h($companyName) ?></td>
+                        <td class="uh-footer-left"><?= h($companyName) ?></td>
                         <td class="uh-footer-right">
                             <?= h($companyWebsite) ?>
                             <?php if ($companyPhone !== ''): ?>
