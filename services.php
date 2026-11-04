@@ -68,6 +68,7 @@ include 'includes/header.php';
     <div class="filter-bar">
         <input class="search-input" id="svc-search" placeholder="Search services…">
     </div>
+    <div class="bulk-actions" style="margin:0 0 14px"><button class="btn btn-danger btn-sm" type="button" id="delete-selected-services"><i class="fas fa-trash"></i> Delete selected</button></div>
     <div class="table-wrap">
         <table id="svc-table" data-client-pagination>
             <thead>
@@ -118,8 +119,6 @@ include 'includes/header.php';
         </table>
     </div>
 </div>
-
-<div class="bulk-actions" style="margin:0 0 14px"><button class="btn btn-danger btn-sm" type="button" id="delete-selected-services"><i class="fas fa-trash"></i> Delete selected</button></div>
 
 <script>
 document.getElementById('svc-search')?.addEventListener('input',e=>{const q=e.target.value.toLowerCase();document.querySelectorAll('#svc-table tbody tr').forEach(row=>row.hidden=!row.textContent.toLowerCase().includes(q));});

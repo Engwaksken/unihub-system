@@ -122,6 +122,7 @@ include 'includes/header.php';
     <div class="filter-bar">
         <input class="search-input" id="client-search" placeholder="Search clients…" autocomplete="off">
     </div>
+    <div class="bulk-actions" style="margin:0 0 14px"><button type="button" class="btn btn-danger btn-sm" id="delete-selected-clients"><i class="fas fa-trash"></i> Delete selected</button><span id="client-selection-count"></span></div>
 
     <div class="table-wrap">
         <table id="clients-table" data-client-pagination>
@@ -174,8 +175,6 @@ include 'includes/header.php';
         </table>
     </div>
 </div>
-
-<div class="bulk-actions" style="margin:0 0 14px"><button type="button" class="btn btn-danger btn-sm" id="delete-selected-clients"><i class="fas fa-trash"></i> Delete selected</button><span id="client-selection-count"></span></div>
 
 <script>
 document.getElementById('client-search')?.addEventListener('input',e=>{const q=e.target.value.toLowerCase();document.querySelectorAll('#clients-table tbody tr').forEach(row=>row.hidden=!row.textContent.toLowerCase().includes(q));});

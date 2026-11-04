@@ -237,6 +237,7 @@ include 'includes/header.php';
         <label>To <input type="date" id="orders-date-to" value="<?= htmlspecialchars((string)($_GET['date_to'] ?? ''), ENT_QUOTES, 'UTF-8') ?>"></label>
         <button type="button" class="btn btn-ghost btn-sm" id="clear-orders-period">Clear dates</button>
     </div>
+    <div class="bulk-actions" style="margin:0 0 14px"><button class="btn btn-danger btn-sm" id="delete-selected-orders" type="button"><i class="fas fa-trash"></i> Delete selected cancelled</button></div>
 
     <div class="table-wrap">
         <table id="orders-table">
@@ -320,7 +321,6 @@ include 'includes/header.php';
         </table>
     </div>
     <nav class="users-pagination" id="orders-pagination" aria-label="Order pages"></nav>
-    <div class="bulk-actions"><button class="btn btn-danger btn-sm" id="delete-selected-orders" type="button"><i class="fas fa-trash"></i> Delete selected cancelled</button></div>
 </div>
 
 <script>

@@ -460,6 +460,7 @@ include 'includes/header.php';
     </div>
     <nav class="users-pagination" aria-label="Invoice pages"><?php if ($page > 1): ?><a class="btn btn-ghost btn-sm" href="<?= h('invoices.php?' . http_build_query(['date_from'=>$dateFrom,'date_to'=>$dateTo,'page'=>$page-1])) ?>">Previous</a><?php endif; ?><span class="users-page-info">Page <?= $page ?> of <?= $totalPages ?> · <?= $totalInvoices ?> invoices</span><?php if ($page < $totalPages): ?><a class="btn btn-ghost btn-sm" href="<?= h('invoices.php?' . http_build_query(['date_from'=>$dateFrom,'date_to'=>$dateTo,'page'=>$page+1])) ?>">Next</a><?php endif; ?></nav>
 
+    <div class="bulk-actions" style="margin:8px 0 14px"><button class="btn btn-danger btn-sm" type="button" id="delete-selected-invoices"><i class="fas fa-trash"></i> Delete selected</button><small>Paid invoices and invoices with receipts are protected.</small></div>
     <div class="table-wrap">
         <table id="inv-table">
             <thead>
@@ -652,7 +653,6 @@ include 'includes/header.php';
             </tbody>
         </table>
     </div>
-    <div class="bulk-actions" style="margin-top:12px"><button class="btn btn-danger btn-sm" type="button" id="delete-selected-invoices"><i class="fas fa-trash"></i> Delete selected</button><small>Paid invoices and invoices with receipts are protected.</small></div>
 </div>
 
 <div id="paymentModalBackdrop" class="invoice-modal-backdrop">
