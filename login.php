@@ -9,6 +9,11 @@ $pdo = getDB();
 if (!$pdo instanceof PDO) {
     die('Database connection unavailable.');
 }
+$settings = getSettings();
+$authLogo = trim((string)($settings['company_logo'] ?? ''));
+if ($authLogo === '') {
+    $authLogo = 'assets/img/logo.png';
+}
 
 if (!function_exists('h')) {
     function h($value): string {
@@ -134,7 +139,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 <div class="login-card">
 
 <div class="login-card-brand">
-        <img class="auth-logo" src="assets/img/logo.png" alt="Unihub Solutions">
+        <img class="auth-logo" src="<?= h($authLogo) ?>" alt="Unihub Solutions">
         <div class="login-card-brand-copy">
             <span class="brand-name">Unihub Solutions</span>
             <span class="brand-sub">Sign in to your account</span>

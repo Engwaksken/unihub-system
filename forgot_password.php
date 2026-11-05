@@ -3,6 +3,12 @@ declare(strict_types=1);
 require_once __DIR__ . '/config/db.php';
 require_once __DIR__ . '/email-function.php';
 
+$settings = getSettings();
+$authLogo = trim((string)($settings['company_logo'] ?? ''));
+if ($authLogo === '') {
+    $authLogo = 'assets/img/logo.png';
+}
+
 $message = '';
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $email = trim((string)($_POST['email'] ?? ''));
@@ -49,7 +55,7 @@ function fp_h($value): string { return htmlspecialchars((string)$value, ENT_QUOT
 <title>Forgot password - Unihub Solutions</title><link rel="icon" href="favicon.php?v=<?= (int)@filemtime(__DIR__ . '/favicon.php') ?>" type="image/png">
 <link rel="stylesheet" href="assets/css/style.css?v=<?= (int)@filemtime(__DIR__ . '/assets/css/style.css') ?>">
 </head><body class="login-page"><main class="login-card auth-card">
-<div class="login-card-brand auth-brand"><img class="auth-logo" src="assets/img/logo.png" alt="Unihub Solutions"><div><span class="brand-name">Reset your password</span><span class="brand-sub">We’ll email a secure reset link.</span></div></div>
+<div class="login-card-brand auth-brand"><img class="auth-logo" src="<?= fp_h($authLogo) ?>" alt="Unihub Solutions"><div><span class="brand-name">Reset your password</span><span class="brand-sub">We’ll email a secure reset link.</span></div></div>
 <?php if ($message !== ''): ?><div class="login-alert login-alert-info" role="status"><?= fp_h($message) ?></div><?php endif; ?>
 <form method="post" class="login-form"><div class="form-group"><label for="email">Account email</label><input id="email" name="email" type="email" required autocomplete="email" placeholder="you@example.com"></div><button class="btn btn-primary login-submit" type="submit">Send reset link</button></form>
 <a class="auth-secondary-link" href="login.php">Back to sign in</a>
