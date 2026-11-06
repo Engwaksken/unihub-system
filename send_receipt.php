@@ -613,11 +613,6 @@ try {
                         <td>
                             <div class="uh-party-label">Received By</div>
                             <div class="uh-party-name"><?= h($companyName) ?></div>
-                            <div class="uh-party-detail">
-                                <?php if ($companyAddress !== ''): ?><?= h($companyAddress) ?><br><?php endif; ?>
-                                <?php if ($companyTin !== ''): ?>TIN: <?= h($companyTin) ?><br><?php endif; ?>
-                                <?php if ($companyPhone !== ''): ?><?= h($companyPhone) ?><?php endif; ?>
-                            </div>
                         </td>
                         <td>
                             <div class="uh-party-label">Received From</div>

@@ -253,11 +253,6 @@ $canVoid   = $status !== 'paid' && $status !== 'void';
         <div class="uh-party">
             <div class="uh-party-label">From</div>
             <div class="uh-party-name"><?= h($companyName) ?></div>
-            <div class="uh-party-detail">
-                <?= h($cfg['company_address'] ?? '') ?><br>
-                <?php if (!empty($cfg['company_tin'])): ?>TIN: <?= h($cfg['company_tin']) ?><br><?php endif; ?>
-                <?php if (!empty($cfg['company_email'])): ?><?= h($cfg['company_email']) ?><?php endif; ?>
-            </div>
         </div>
         <div class="uh-party-divider"></div>
         <div class="uh-party">

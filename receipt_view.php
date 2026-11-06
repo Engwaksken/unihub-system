@@ -148,11 +148,6 @@ $paymentMethod = ucwords(str_replace('_', ' ', (string)($rcp['payment_method'] ?
         <div class="uh-party">
             <div class="uh-party-label">Received By</div>
             <div class="uh-party-name"><?= htmlspecialchars($companyName) ?></div>
-            <div class="uh-party-detail">
-                <?php if ($companyAddress): ?><?= htmlspecialchars($companyAddress) ?><br><?php endif; ?>
-                <?php if ($companyTin): ?>TIN: <?= htmlspecialchars($companyTin) ?><br><?php endif; ?>
-                <?php if ($companyPhone): ?><?= htmlspecialchars($companyPhone) ?><?php endif; ?>
-            </div>
         </div>
         <div class="uh-party-divider"></div>
         <div class="uh-party">

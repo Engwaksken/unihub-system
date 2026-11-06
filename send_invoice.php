@@ -680,23 +680,6 @@ CSS;
                         <td class="uh-party-left">
                             <div class="uh-party-label">From</div>
                             <div class="uh-party-name"><?= h($companyName) ?></div>
-                            <div class="uh-party-detail">
-                                <?php if ($companyAddress !== ''): ?>
-                                    <?= nl2br(h($companyAddress)) ?><br>
-                                <?php endif; ?>
-
-                                <?php if ($companyTin !== ''): ?>
-                                    TIN: <?= h($companyTin) ?><br>
-                                <?php endif; ?>
-
-                                <?php if ($companyPhone !== ''): ?>
-                                    <?= h($companyPhone) ?><br>
-                                <?php endif; ?>
-
-                                <?php if ($companyEmail !== ''): ?>
-                                    <?= h($companyEmail) ?>
-                                <?php endif; ?>
-                            </div>
                         </td>
                         <td class="uh-party-right">
                             <div class="uh-party-label">Bill To</div>
