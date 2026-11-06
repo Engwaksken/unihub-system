@@ -1194,7 +1194,7 @@ body.login-page {
 
 @media print {
     body { background: #fff; color: #111; font-size: 12px; }
-    .sidebar, .topbar, .doc-actions, .btn, nav { display: none !important; }
+    .sidebar, .sidebar-backdrop, .topbar, .doc-actions, .btn, nav, .page-overview-stats { display: none !important; }
     .main-wrapper { margin-left: 0; }
     .main-content { padding: 0; }
     .print-doc { box-shadow: none; border-radius: 0; padding: 0; }
@@ -1631,8 +1631,10 @@ body.login-page {
 
 /* ── Print ──────────────────────────────────── */
 @media print{
-    .uh-actions,.sidebar,.topbar,nav,.no-print{ display:none!important; }
+    .uh-actions,.sidebar,.sidebar-backdrop,.topbar,nav,.no-print,.page-overview-stats,.doc-actions,.quote-actions{ display:none!important; }
     body{ background:#fff!important; }
+    .main-wrapper{ margin-left:0!important; }
+    .main-content{ padding:0!important; }
     .uh-paper{ box-shadow:none; }
 }
 
@@ -2140,7 +2142,7 @@ body.login-page {
 .quote-meta{display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-bottom:20px}.quote-box{border:1px solid #e5e7eb;border-radius:14px;background:#f8fafc;padding:14px}.quote-box-title{font-size:.75rem;font-weight:900;text-transform:uppercase;color:#64748b;margin-bottom:8px}
 .quote-totals{width:340px;margin-left:auto;margin-top:18px;border:1px solid #e5e7eb;border-radius:14px;padding:14px}.quote-total-row{display:flex;justify-content:space-between;padding:7px 0}.quote-total-row.grand{border-top:2px solid #111827;margin-top:6px;padding-top:12px;font-weight:900}
 .quote-modal-backdrop{position:fixed;inset:0;background:rgba(15,23,42,.55);display:none;align-items:center;justify-content:center;z-index:99999;padding:20px}.quote-modal-backdrop.show{display:flex}.quote-modal{width:100%;max-width:1100px;max-height:92vh;overflow:auto;background:#fff;border-radius:18px;box-shadow:0 25px 70px rgba(0,0,0,.22)}.quote-modal-header,.quote-modal-footer{padding:16px 20px;border-bottom:1px solid #e5e7eb;display:flex;justify-content:space-between;align-items:center;gap:12px}.quote-modal-footer{border-bottom:0;border-top:1px solid #e5e7eb}.quote-modal-header h3{margin:0;font-size:1.05rem;font-weight:800}.quote-modal-close{border:0;background:transparent;cursor:pointer;color:#64748b;font-size:18px}.quote-modal-body{padding:20px}
-@media(max-width:1100px){.quote-item-row{grid-template-columns:1fr}}@media(max-width:900px){.quote-meta,.quote-form-grid{grid-template-columns:1fr}.quote-doc-title{text-align:left}}@media print{.no-print,.doc-actions,.quote-actions,header,nav,.sidebar,.topbar,footer{display:none!important}.print-quote{box-shadow:none;border-radius:0;padding:0}}
+@media(max-width:1100px){.quote-item-row{grid-template-columns:1fr}}@media(max-width:900px){.quote-meta,.quote-form-grid{grid-template-columns:1fr}.quote-doc-title{text-align:left}}@media print{.no-print,.doc-actions,.quote-actions,header,nav,.sidebar,.sidebar-backdrop,.topbar,footer,.page-overview-stats{display:none!important}.print-quote{box-shadow:none;border-radius:0;padding:0}}
 
 /* Shared page overview and responsive polish */
 .page-overview-stats {
