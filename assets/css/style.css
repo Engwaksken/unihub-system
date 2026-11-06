@@ -1803,6 +1803,13 @@ body.login-page {
     height: 150px;
 }
 
+.uh-stamp-svg-wrap .uh-stamp-img {
+    width: 150px;
+    height: 150px;
+    object-fit: contain;
+    display: block;
+}
+
 @media (max-width: 700px) {
     .uh-meta-bar { grid-template-columns: 1fr 1fr; }
     .uh-parties { grid-template-columns: 1fr; gap: 16px; }

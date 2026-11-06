@@ -38,7 +38,7 @@ $requiredKeys = [
     'company_tin','company_website','currency','currency_symbol',
     'invoice_footer','invoice_prefix','order_prefix','receipt_prefix',
     'payment_terms','vat_rate','bank_name','account_name',
-    'account_number','bank_branch','company_logo','company_favicon',
+    'account_number','bank_branch','company_logo','company_favicon','company_stamp',
     'efris_enabled','efris_environment','efris_taxpayer_type','efris_branch_id','efris_device_id',
     'brand_primary_color','brand_accent_color','brand_font_family'
 ];
@@ -96,6 +96,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
         $logoPath = trim($_POST['existing_company_logo'] ?? '');
         $faviconPath = trim($_POST['existing_company_favicon'] ?? 'assets/img/favicon.png');
+        $stampPath = trim($_POST['existing_company_stamp'] ?? '');
 
         if (!empty($_FILES['company_logo_file']['name'])) {
             $file = $_FILES['company_logo_file'];
@@ -145,6 +146,38 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             $faviconPath = 'assets/img/uploads/settings/' . $filename;
         }
 
+        if (!empty($_FILES['company_stamp_file']['name'])) {
+            $file = $_FILES['company_stamp_file'];
+            if (!isset($file['error']) || is_array($file['error']))
+                throw new RuntimeException('Invalid stamp upload.');
+            if ($file['error'] !== UPLOAD_ERR_OK)
+                throw new RuntimeException('Stamp upload failed. Error code: ' . $file['error']);
+            if ($file['size'] > 5 * 1024 * 1024)
+                throw new RuntimeException('Stamp file too large. Maximum 5 MB.');
+
+            $finfo = finfo_open(FILEINFO_MIME_TYPE);
+            $mime  = finfo_file($finfo, $file['tmp_name']);
+            finfo_close($finfo);
+
+            $allowedMime = [
+                'image/jpeg' => 'jpg','image/png' => 'png',
+                'image/webp' => 'webp','image/gif' => 'gif','image/svg+xml' => 'svg'
+            ];
+            if (!isset($allowedMime[$mime]))
+                throw new RuntimeException('Only JPG, PNG, WEBP, GIF or SVG stamps are allowed.');
+
+            $ext       = $allowedMime[$mime];
+            $uploadDir = __DIR__ . '/assets/img/uploads/settings';
+            if (!is_dir($uploadDir) && !mkdir($uploadDir, 0775, true))
+                throw new RuntimeException('Failed to create upload directory.');
+
+            $fileName = 'company_stamp_' . date('Ymd_His') . '_' . bin2hex(random_bytes(4)) . '.' . $ext;
+            if (!move_uploaded_file($file['tmp_name'], $uploadDir . '/' . $fileName))
+                throw new RuntimeException('Failed to save uploaded stamp.');
+
+            $stampPath = 'assets/img/uploads/settings/' . $fileName;
+        }
+
         $pdo->beginTransaction();
         foreach ([
             'company_name'    => $companyName,
@@ -168,6 +201,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             'bank_branch'     => $bankBranch,
             'company_logo'    => $logoPath,
             'company_favicon' => $faviconPath,
+            'company_stamp'   => $stampPath,
             'brand_primary_color' => $brandPrimaryColor,
             'brand_accent_color' => $brandAccentColor,
             'brand_font_family' => $brandFontFamily,
@@ -193,6 +227,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 $settings    = getSettings();
 $currentLogo = setting_value($settings, 'company_logo');
 $currentFavicon = setting_value($settings, 'company_favicon', 'assets/img/favicon.png');
+$currentStamp = setting_value($settings, 'company_stamp');
 $pageTitle   = 'System Settings';
 include 'includes/header.php';
 ?>
@@ -296,6 +331,32 @@ include 'includes/header.php';
                         <label>Or Manual Path</label>
                         <input type="text" id="company_logo_manual"
                                value="<?= h($currentLogo) ?>" placeholder="assets/img/logo.png">
+                        <span class="settings-hint">Optional path override.</span>
+                    </div>
+                </div>
+            </div>
+
+            <div class="settings-logo-wrap" style="margin-top:18px;padding-top:18px;border-top:1px dashed var(--border)">
+                <div class="settings-logo-preview">
+                    <?php if ($currentStamp && file_exists(__DIR__ . '/' . ltrim($currentStamp,'/'))): ?>
+                        <img src="<?= h($currentStamp) ?>" alt="Stamp" id="stampPreviewImage">
+                    <?php else: ?>
+                        <span class="settings-logo-placeholder" id="stampPreviewPlaceholder">No stamp</span>
+                        <img src="" alt="Stamp" id="stampPreviewImage" class="settings-logo-hidden">
+                    <?php endif; ?>
+                </div>
+                <div class="settings-logo-fields">
+                    <div class="form-group">
+                        <label>Official Stamp / Seal</label>
+                        <input type="file" id="company_stamp_file" name="company_stamp_file"
+                               accept=".jpg,.jpeg,.png,.webp,.gif,.svg,image/*">
+                        <span class="settings-hint">Transparent PNG recommended. Used on receipts. Leave empty to keep the default seal.</span>
+                    </div>
+                    <input type="hidden" name="existing_company_stamp" value="<?= h($currentStamp) ?>">
+                    <div class="form-group">
+                        <label>Or Manual Path</label>
+                        <input type="text" id="company_stamp_manual"
+                               value="<?= h($currentStamp) ?>" placeholder="assets/img/stamp.png">
                         <span class="settings-hint">Optional path override.</span>
                     </div>
                 </div>
@@ -447,6 +508,32 @@ include 'includes/header.php';
                 previewImg.src = ev.target.result;
                 previewImg.classList.remove('settings-logo-hidden');
                 if (placeholder) placeholder.style.display = 'none';
+            };
+            reader.readAsDataURL(file);
+        });
+    }
+
+    const stampFileInput   = document.getElementById('company_stamp_file');
+    const stampManualInput = document.getElementById('company_stamp_manual');
+    const stampHiddenPath  = document.querySelector('input[name="existing_company_stamp"]');
+    const stampPreviewImg  = document.getElementById('stampPreviewImage');
+    const stampPlaceholder = document.getElementById('stampPreviewPlaceholder');
+
+    if (stampManualInput && stampHiddenPath) {
+        stampManualInput.addEventListener('change', () => stampHiddenPath.value = stampManualInput.value.trim());
+    }
+
+    if (stampFileInput) {
+        stampFileInput.addEventListener('change', function () {
+            const file = this.files && this.files[0];
+            if (!file) return;
+            const reader = new FileReader();
+            reader.onload = ev => {
+                if (stampPreviewImg) {
+                    stampPreviewImg.src = ev.target.result;
+                    stampPreviewImg.classList.remove('settings-logo-hidden');
+                }
+                if (stampPlaceholder) stampPlaceholder.style.display = 'none';
             };
             reader.readAsDataURL(file);
         });

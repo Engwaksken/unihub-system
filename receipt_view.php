@@ -91,6 +91,12 @@ if ($signaturePath !== '') {
     }
 }
 
+$stampPath = trim((string)($cfg['company_stamp'] ?? ''));
+$stampUrl  = '';
+if ($stampPath !== '' && is_file(__DIR__ . '/' . ltrim($stampPath, '/\\'))) {
+    $stampUrl = $stampPath;
+}
+
 $paymentDate = !empty($rcp['payment_date']) ? date('d F Y', strtotime($rcp['payment_date'])) : '-';
 $paymentMethod = ucwords(str_replace('_', ' ', (string)($rcp['payment_method'] ?? '')));
 ?>
@@ -256,10 +262,13 @@ $paymentMethod = ucwords(str_replace('_', ' ', (string)($rcp['payment_method'] ?
             </div>
         </div>
 
-        <!-- Official Stamp - inline SVG from unihub_stamp.svg (round seal variant, scaled) -->
+        <!-- Official Stamp -->
         <div class="uh-stamp-area">
             <div class="uh-stamp-label">Official Stamp</div>
             <div class="uh-stamp-svg-wrap">
+                <?php if ($stampUrl !== ''): ?>
+                    <img src="<?= htmlspecialchars($stampUrl) ?>" alt="Official Stamp" class="uh-stamp-img">
+                <?php else: ?>
                 <!--
                     Inline round seal extracted from unihub_stamp.svg
                     cx=297.64 cy=168 r=120  ?  scaled to 150�150 via viewBox
@@ -298,6 +307,7 @@ $paymentMethod = ucwords(str_replace('_', ' ', (string)($rcp['payment_method'] ?
                     <text x="175" y="172" font-size="10" fill="#fc7f10" text-anchor="middle">?</text>
                     <text x="420" y="172" font-size="10" fill="#fc7f10" text-anchor="middle">?</text>
                 </svg>
+                <?php endif; ?>
             </div>
         </div>
 
