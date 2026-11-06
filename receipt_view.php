@@ -111,16 +111,7 @@ $paymentMethod = ucwords(str_replace('_', ' ', (string)($rcp['payment_method'] ?
     <!-- -- HEADER -- -->
     <div class="uh-header">
         <div class="uh-brand">
-            <div class="uh-icon-box">
-                <img src="<?= htmlspecialchars($logoPath) ?>" alt="<?= htmlspecialchars($companyName) ?> Logo" class="uh-logo-img">
-            </div>
-            <div class="uh-wordmark">
-                <div class="uh-wordmark-main">
-                    <?= htmlspecialchars($companyName) ?>
-                </div>
-                <?php if (!empty($cfg['company_tagline'])): ?><div class="uh-wordmark-tagline"><?= htmlspecialchars($cfg['company_tagline']) ?></div><?php endif; ?>
-               
-            </div>
+            <img src="<?= htmlspecialchars($logoPath) ?>" alt="<?= htmlspecialchars($companyName) ?> Logo" class="uh-logo-landscape">
         </div>
         <div class="uh-doc-badge-rcpt">RECEIPT</div>
     </div>

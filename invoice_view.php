@@ -217,15 +217,7 @@ $canVoid   = $status !== 'paid' && $status !== 'void';
     <!-- ── HEADER BAND ── -->
     <div class="uh-header">
         <div class="uh-brand">
-            <div class="uh-icon-box">
-                <img src="<?= h($logoPath) ?>" alt="<?= h($companyName) ?> Logo">
-            </div>
-            <div class="uh-wordmark">
-                <div class="uh-wordmark-main">
-                    <?= h($companyName) ?>
-                </div>
-                <?php if (!empty($cfg['company_tagline'])): ?><div class="uh-wordmark-tagline"><?= h($cfg['company_tagline']) ?></div><?php endif; ?>
-            </div>
+            <img src="<?= h($logoPath) ?>" alt="<?= h($companyName) ?> Logo" class="uh-logo-landscape">
         </div>
         <div class="uh-doc-badge">INVOICE</div>
     </div>

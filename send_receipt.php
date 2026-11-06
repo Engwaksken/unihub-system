@@ -128,8 +128,9 @@ body {
 }
 
 .uh-logo-img {
-    width: 66px;
-    height: 66px;
+    width: auto;
+    max-width: 300px;
+    height: 64px;
     object-fit: contain;
 }
 
@@ -544,30 +545,9 @@ try {
                 <table class="uh-header-table">
                     <tr>
                         <td class="uh-brand-cell">
-                            <table class="uh-header-table">
-                                <tr>
-                                    <td style="width:76px;vertical-align:top">
-                                        <?php if ($logoDataUri !== ''): ?>
-                                            <img src="<?= h($logoDataUri) ?>" class="uh-logo-img" alt="Logo">
-                                        <?php endif; ?>
-                                    </td>
-                                    <td>
-                                        <div class="uh-company-name"><?= h($companyName) ?></div>
-                                        <?php if ($companyTagline !== ''): ?><div class="uh-company-tagline"><?= h($companyTagline) ?></div><?php endif; ?>
-                                        <div class="uh-company-muted">
-                                            <?php if ($companyAddress !== ''): ?>
-                                                <?= h($companyAddress) ?><br>
-                                            <?php endif; ?>
-                                            <?= h($companyPhone) ?>
-                                            <?php if ($companyPhone !== '' && $companyEmail !== ''): ?> | <?php endif; ?>
-                                            <?= h($companyEmail) ?><br>
-                                            <?php if ($companyTin !== ''): ?>
-                                                TIN: <?= h($companyTin) ?>
-                                            <?php endif; ?>
-                                        </div>
-                                    </td>
-                                </tr>
-                            </table>
+                            <?php if ($logoDataUri !== ''): ?>
+                                <img src="<?= h($logoDataUri) ?>" class="uh-logo-img" alt="Logo">
+                            <?php endif; ?>
                         </td>
                         <td style="text-align:right">
                             <div class="uh-doc-badge-rcpt">RECEIPT</div>

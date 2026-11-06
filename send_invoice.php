@@ -257,11 +257,10 @@ body {
 }
 
 .uh-logo-img {
-    width: 56px;
-    height: 56px;
+    width: auto;
+    max-width: 300px;
+    height: 64px;
     object-fit: contain;
-    background: #ffffff;
-    border-radius: 8px;
 }
 
 .uh-logo-fallback {
@@ -612,23 +611,11 @@ CSS;
                 <table class="uh-header-table">
                     <tr>
                         <td class="uh-brand-cell">
-                            <table class="uh-brand-table">
-                                <tr>
-                                    <td class="uh-logo-cell">
-                                        <?php if ($logoDataUri !== ''): ?>
-                                            <img src="<?= h($logoDataUri) ?>" class="uh-logo-img" alt="Logo">
-                                        <?php else: ?>
-                                            <div class="uh-logo-fallback">U</div>
-                                        <?php endif; ?>
-                                    </td>
-                                    <td class="uh-wordmark">
-                                        <div class="uh-wordmark-main">
-                                            <?= h($companyName) ?>
-                                        </div>
-                                        <?php if ($companyTagline !== ''): ?><div class="uh-company-tagline"><?= h($companyTagline) ?></div><?php endif; ?>
-                                    </td>
-                                </tr>
-                            </table>
+                            <?php if ($logoDataUri !== ''): ?>
+                                <img src="<?= h($logoDataUri) ?>" class="uh-logo-img" alt="Logo">
+                            <?php else: ?>
+                                <div class="uh-logo-fallback">U</div>
+                            <?php endif; ?>
                         </td>
                         <td class="uh-doc-cell">
                             <div class="uh-doc-badge uh-doc-badge-invoice">Invoice</div>

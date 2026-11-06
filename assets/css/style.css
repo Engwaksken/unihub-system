@@ -1682,6 +1682,14 @@ body.login-page {
     display: block;
 }
 
+.uh-logo-landscape {
+    width: auto;
+    max-width: 320px;
+    height: 72px;
+    object-fit: contain;
+    display: block;
+}
+
 .uh-paid-bar {
     background: #e8f5e9;
     border-left: 4px solid #2e7d32;
@@ -2121,7 +2129,7 @@ body.login-page {
 .print-quote::before{content:"";position:absolute;inset:0;background:url('assets/img/logo.png') no-repeat center;background-size:360px;opacity:.045;pointer-events:none}
 .print-quote>*{position:relative;z-index:1}
 .quote-header{display:flex;justify-content:space-between;gap:20px;border-bottom:1px solid #e5e7eb;padding-bottom:18px;margin-bottom:22px}.quote-tagline{margin:-3px 0 5px;color:var(--text-muted);font-size:.86rem;font-style:italic}
-.quote-brand{display:flex;gap:14px;align-items:flex-start}.quote-brand img{width:64px;height:64px;object-fit:contain}.quote-company{font-weight:900;font-size:1.15rem}.quote-muted{color:#64748b;font-size:.88rem;line-height:1.6}.quote-doc-title{text-align:right}.quote-doc-title h2{margin:0;font-size:1.4rem;letter-spacing:.06em}
+.quote-brand{display:flex;gap:14px;align-items:flex-start}.quote-brand img{width:auto;max-width:320px;height:72px;object-fit:contain}.quote-company{font-weight:900;font-size:1.15rem}.quote-muted{color:#64748b;font-size:.88rem;line-height:1.6}.quote-doc-title{text-align:right}.quote-doc-title h2{margin:0;font-size:1.4rem;letter-spacing:.06em}
 .quote-meta{display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-bottom:20px}.quote-box{border:1px solid #e5e7eb;border-radius:14px;background:#f8fafc;padding:14px}.quote-box-title{font-size:.75rem;font-weight:900;text-transform:uppercase;color:#64748b;margin-bottom:8px}
 .quote-totals{width:340px;margin-left:auto;margin-top:18px;border:1px solid #e5e7eb;border-radius:14px;padding:14px}.quote-total-row{display:flex;justify-content:space-between;padding:7px 0}.quote-total-row.grand{border-top:2px solid #111827;margin-top:6px;padding-top:12px;font-weight:900}
 .quote-modal-backdrop{position:fixed;inset:0;background:rgba(15,23,42,.55);display:none;align-items:center;justify-content:center;z-index:99999;padding:20px}.quote-modal-backdrop.show{display:flex}.quote-modal{width:100%;max-width:1100px;max-height:92vh;overflow:auto;background:#fff;border-radius:18px;box-shadow:0 25px 70px rgba(0,0,0,.22)}.quote-modal-header,.quote-modal-footer{padding:16px 20px;border-bottom:1px solid #e5e7eb;display:flex;justify-content:space-between;align-items:center;gap:12px}.quote-modal-footer{border-bottom:0;border-top:1px solid #e5e7eb}.quote-modal-header h3{margin:0;font-size:1.05rem;font-weight:800}.quote-modal-close{border:0;background:transparent;cursor:pointer;color:#64748b;font-size:18px}.quote-modal-body{padding:20px}
