@@ -1690,6 +1690,13 @@ body.login-page {
     display: block;
 }
 
+.uh-brand-detail {
+    color: #64748b;
+    font-size: .84rem;
+    line-height: 1.55;
+    max-width: 460px;
+}
+
 .uh-paid-bar {
     background: #e8f5e9;
     border-left: 4px solid #2e7d32;

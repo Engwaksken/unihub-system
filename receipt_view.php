@@ -48,10 +48,7 @@ $companyPhone   = $cfg['company_phone']   ?? '+256 704 145 972 ';
 $companyEmail   = $cfg['company_email']   ?? '';
 $companyTin     = $cfg['company_tin']     ?? '';
 $companyWebsite = $cfg['company_website'] ?? 'www.unihubug.com';
-$logoPath       = trim((string)($cfg['document_logo'] ?? ''));
-if ($logoPath === '' || !is_file(__DIR__ . '/' . ltrim($logoPath, '/\\'))) {
-    $logoPath = trim((string)($cfg['company_logo'] ?? ''));
-}
+$logoPath       = trim((string)($cfg['company_logo'] ?? ''));
 if ($logoPath === '' || !is_file(__DIR__ . '/' . ltrim($logoPath, '/\\'))) $logoPath = 'assets/img/logo.png';
 
 $invoiceTotal = (float)($rcp['invoice_total'] ?? 0);
@@ -112,6 +109,11 @@ $paymentMethod = ucwords(str_replace('_', ' ', (string)($rcp['payment_method'] ?
     <div class="uh-header">
         <div class="uh-brand">
             <img src="<?= htmlspecialchars($logoPath) ?>" alt="<?= htmlspecialchars($companyName) ?> Logo" class="uh-logo-landscape">
+            <div class="uh-brand-detail">
+                <?php if (!empty($cfg['company_address'])): ?><?= htmlspecialchars($cfg['company_address']) ?><br><?php endif; ?>
+                <?php if (!empty($cfg['company_phone'])): ?><?= htmlspecialchars($cfg['company_phone']) ?><?php endif; ?><?php if (!empty($cfg['company_phone']) && !empty($cfg['company_email'])): ?> | <?php endif; ?><?php if (!empty($cfg['company_email'])): ?><?= htmlspecialchars($cfg['company_email']) ?><?php endif; ?><br>
+                <?php if (!empty($cfg['company_tin'])): ?>TIN: <?= htmlspecialchars($cfg['company_tin']) ?><?php endif; ?>
+            </div>
         </div>
         <div class="uh-doc-badge-rcpt">RECEIPT</div>
     </div>

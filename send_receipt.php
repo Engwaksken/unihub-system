@@ -141,6 +141,7 @@ body {
     margin-bottom: 4px;
 }
 .uh-company-tagline { color:rgba(255,255,255,.78);font-size:11px;font-style:italic;margin:-2px 0 5px; }
+.uh-brand-detail { color:#64748b;font-size:10px;line-height:1.6; }
 
 .uh-company-muted {
     color: rgba(255,255,255,.72);
@@ -462,8 +463,7 @@ try {
 
     $amountPaid = (float)($rcp['amount_paid'] ?? 0);
 
-    $configuredLogo = trim((string)($cfg['document_logo'] ?? ''));
-    if ($configuredLogo === '') $configuredLogo = trim((string)($cfg['company_logo'] ?? ''));
+    $configuredLogo = trim((string)($cfg['company_logo'] ?? ''));
     $logoPath = $configuredLogo !== '' ? realpath(__DIR__ . '/' . ltrim($configuredLogo, '/\\')) : false;
     $assetsRoot = realpath(__DIR__ . '/assets/img');
     if (!$logoPath || !$assetsRoot || !str_starts_with($logoPath, $assetsRoot . DIRECTORY_SEPARATOR) || !is_file($logoPath)) $logoPath = __DIR__ . '/assets/img/logo.png';
@@ -479,24 +479,6 @@ try {
         $logoData = file_get_contents($logoPath);
         if ($logoData !== false) {
             $logoDataUri = 'data:' . $logoMime . ';base64,' . base64_encode($logoData);
-        }
-    }
-
-    $siteLogo = trim((string)($cfg['company_logo'] ?? ''));
-    $watermarkLogoPath = $siteLogo !== '' ? realpath(__DIR__ . '/' . ltrim($siteLogo, '/\\')) : false;
-    if (!$watermarkLogoPath || !$assetsRoot || !str_starts_with($watermarkLogoPath, $assetsRoot . DIRECTORY_SEPARATOR) || !is_file($watermarkLogoPath)) $watermarkLogoPath = __DIR__ . '/assets/img/logo.png';
-    $watermarkDataUri = '';
-    if (is_file($watermarkLogoPath)) {
-        $wmExt = strtolower((string)pathinfo($watermarkLogoPath, PATHINFO_EXTENSION));
-        $wmMime = match ($wmExt) {
-            'jpg', 'jpeg' => 'image/jpeg',
-            'webp'        => 'image/webp',
-            'svg'         => 'image/svg+xml',
-            default       => 'image/png',
-        };
-        $wmData = file_get_contents($watermarkLogoPath);
-        if ($wmData !== false) {
-            $watermarkDataUri = 'data:' . $wmMime . ';base64,' . base64_encode($wmData);
         }
     }
 
@@ -551,8 +533,8 @@ try {
 </head>
 <body>
 <div class="uh-pdf-doc">
-    <?php if ($watermarkDataUri !== ''): ?>
-        <img src="<?= h($watermarkDataUri) ?>" class="uh-pdf-watermark" alt="Watermark">
+    <?php if ($logoDataUri !== ''): ?>
+        <img src="<?= h($logoDataUri) ?>" class="uh-pdf-watermark" alt="Watermark">
     <?php endif; ?>
 
     <div class="uh-pdf-content">
@@ -563,9 +545,22 @@ try {
                 <table class="uh-header-table">
                     <tr>
                         <td class="uh-brand-cell">
-                            <?php if ($logoDataUri !== ''): ?>
-                                <img src="<?= h($logoDataUri) ?>" class="uh-logo-img" alt="Logo">
-                            <?php endif; ?>
+                            <table class="uh-header-table">
+                                <tr>
+                                    <td style="vertical-align:middle;padding-right:14px">
+                                        <?php if ($logoDataUri !== ''): ?>
+                                            <img src="<?= h($logoDataUri) ?>" class="uh-logo-img" alt="Logo">
+                                        <?php endif; ?>
+                                    </td>
+                                    <td style="vertical-align:middle">
+                                        <div class="uh-brand-detail">
+                                            <?php if ($companyAddress !== ''): ?><?= h($companyAddress) ?><br><?php endif; ?>
+                                            <?php if ($companyPhone !== ''): ?><?= h($companyPhone) ?><?php endif; ?><?php if ($companyPhone !== '' && $companyEmail !== ''): ?> | <?php endif; ?><?php if ($companyEmail !== ''): ?><?= h($companyEmail) ?><?php endif; ?><br>
+                                            <?php if ($companyTin !== ''): ?>TIN: <?= h($companyTin) ?><?php endif; ?>
+                                        </div>
+                                    </td>
+                                </tr>
+                            </table>
                         </td>
                         <td style="text-align:right">
                             <div class="uh-doc-badge-rcpt">RECEIPT</div>

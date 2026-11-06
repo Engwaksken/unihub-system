@@ -155,17 +155,11 @@ try {
     $companyTin     = (string)($cfg['company_tin'] ?? '');
     $companyWebsite = (string)($cfg['company_website'] ?? 'www.unihubug.com');
 
-    $configuredLogo = trim((string)($cfg['document_logo'] ?? ''));
-    if ($configuredLogo === '') $configuredLogo = trim((string)($cfg['company_logo'] ?? ''));
+    $configuredLogo = trim((string)($cfg['company_logo'] ?? ''));
     $logoFile = $configuredLogo !== '' ? realpath(__DIR__ . '/' . ltrim($configuredLogo, '/\\')) : false;
     $assetsRoot = realpath(__DIR__ . '/assets/img');
     if (!$logoFile || !$assetsRoot || !str_starts_with($logoFile, $assetsRoot . DIRECTORY_SEPARATOR) || !is_file($logoFile)) $logoFile = __DIR__ . '/assets/img/logo.png';
     $logoDataUri = assetDataUri($logoFile);
-
-    $siteLogo = trim((string)($cfg['company_logo'] ?? ''));
-    $watermarkFile = $siteLogo !== '' ? realpath(__DIR__ . '/' . ltrim($siteLogo, '/\\')) : false;
-    if (!$watermarkFile || !$assetsRoot || !str_starts_with($watermarkFile, $assetsRoot . DIRECTORY_SEPARATOR) || !is_file($watermarkFile)) $watermarkFile = __DIR__ . '/assets/img/logo.png';
-    $watermarkDataUri = assetDataUri($watermarkFile);
 
     $status = strtolower((string)($inv['status'] ?? 'pending'));
     $statusLabel = strtoupper((string)($inv['status'] ?? 'PENDING'));
@@ -310,6 +304,7 @@ body {
     padding-top: 3px;
 }
 .uh-company-tagline { color:rgba(255,255,255,.78);font-size:10px;font-style:italic;padding-top:4px; }
+.uh-brand-detail { color:#64748b;font-size:10px;line-height:1.6; }
 
 .uh-doc-badge,
 .uh-doc-badge-invoice {
@@ -605,8 +600,8 @@ CSS;
 </head>
 <body>
 <div class="uh-pdf-wrap">
-    <?php if ($watermarkDataUri !== ''): ?>
-        <img src="<?= h($watermarkDataUri) ?>" class="uh-pdf-watermark" alt="Watermark">
+    <?php if ($logoDataUri !== ''): ?>
+        <img src="<?= h($logoDataUri) ?>" class="uh-pdf-watermark" alt="Watermark">
     <?php endif; ?>
 
     <div class="uh-pdf-content">
@@ -616,11 +611,24 @@ CSS;
                 <table class="uh-header-table">
                     <tr>
                         <td class="uh-brand-cell">
-                            <?php if ($logoDataUri !== ''): ?>
-                                <img src="<?= h($logoDataUri) ?>" class="uh-logo-img" alt="Logo">
-                            <?php else: ?>
-                                <div class="uh-logo-fallback">U</div>
-                            <?php endif; ?>
+                            <table class="uh-brand-table">
+                                <tr>
+                                    <td style="vertical-align:middle;padding-right:14px">
+                                        <?php if ($logoDataUri !== ''): ?>
+                                            <img src="<?= h($logoDataUri) ?>" class="uh-logo-img" alt="Logo">
+                                        <?php else: ?>
+                                            <div class="uh-logo-fallback">U</div>
+                                        <?php endif; ?>
+                                    </td>
+                                    <td style="vertical-align:middle">
+                                        <div class="uh-brand-detail">
+                                            <?php if ($companyAddress !== ''): ?><?= h($companyAddress) ?><br><?php endif; ?>
+                                            <?php if ($companyPhone !== ''): ?><?= h($companyPhone) ?><?php endif; ?><?php if ($companyPhone !== '' && $companyEmail !== ''): ?> | <?php endif; ?><?php if ($companyEmail !== ''): ?><?= h($companyEmail) ?><?php endif; ?><br>
+                                            <?php if ($companyTin !== ''): ?>TIN: <?= h($companyTin) ?><?php endif; ?>
+                                        </div>
+                                    </td>
+                                </tr>
+                            </table>
                         </td>
                         <td class="uh-doc-cell">
                             <div class="uh-doc-badge uh-doc-badge-invoice">Invoice</div>

@@ -38,7 +38,7 @@ $requiredKeys = [
     'company_tin','company_website','currency','currency_symbol',
     'invoice_footer','invoice_prefix','order_prefix','receipt_prefix',
     'payment_terms','vat_rate','bank_name','account_name',
-    'account_number','bank_branch','company_logo','document_logo','company_favicon',
+    'account_number','bank_branch','company_logo','company_favicon',
     'efris_enabled','efris_environment','efris_taxpayer_type','efris_branch_id','efris_device_id',
     'brand_primary_color','brand_accent_color','brand_font_family'
 ];
@@ -129,40 +129,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             $logoPath = 'assets/img/uploads/settings/' . $fileName;
         }
 
-        $documentLogoPath = trim($_POST['existing_document_logo'] ?? '');
-
-        if (!empty($_FILES['document_logo_file']['name'])) {
-            $file = $_FILES['document_logo_file'];
-            if (!isset($file['error']) || is_array($file['error']))
-                throw new RuntimeException('Invalid document logo upload.');
-            if ($file['error'] !== UPLOAD_ERR_OK)
-                throw new RuntimeException('Document logo upload failed. Error code: ' . $file['error']);
-            if ($file['size'] > 5 * 1024 * 1024)
-                throw new RuntimeException('Document logo file too large. Maximum 5 MB.');
-
-            $finfo = finfo_open(FILEINFO_MIME_TYPE);
-            $mime  = finfo_file($finfo, $file['tmp_name']);
-            finfo_close($finfo);
-
-            $allowedMime = [
-                'image/jpeg' => 'jpg','image/png' => 'png',
-                'image/webp' => 'webp','image/gif' => 'gif','image/svg+xml' => 'svg'
-            ];
-            if (!isset($allowedMime[$mime]))
-                throw new RuntimeException('Only JPG, PNG, WEBP, GIF or SVG document logos are allowed.');
-
-            $ext       = $allowedMime[$mime];
-            $uploadDir = __DIR__ . '/assets/img/uploads/settings';
-            if (!is_dir($uploadDir) && !mkdir($uploadDir, 0775, true))
-                throw new RuntimeException('Failed to create upload directory.');
-
-            $fileName = 'document_logo_' . date('Ymd_His') . '_' . bin2hex(random_bytes(4)) . '.' . $ext;
-            if (!move_uploaded_file($file['tmp_name'], $uploadDir . '/' . $fileName))
-                throw new RuntimeException('Failed to save uploaded document logo.');
-
-            $documentLogoPath = 'assets/img/uploads/settings/' . $fileName;
-        }
-
         if (!empty($_FILES['company_favicon_file']['name'])) {
             $file = $_FILES['company_favicon_file'];
             if (($file['error'] ?? UPLOAD_ERR_NO_FILE) !== UPLOAD_ERR_OK || !is_uploaded_file($file['tmp_name'] ?? '')) throw new RuntimeException('Favicon upload failed.');
@@ -201,7 +167,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             'account_number'  => $accountNumber,
             'bank_branch'     => $bankBranch,
             'company_logo'    => $logoPath,
-            'document_logo'   => $documentLogoPath,
             'company_favicon' => $faviconPath,
             'brand_primary_color' => $brandPrimaryColor,
             'brand_accent_color' => $brandAccentColor,
@@ -227,7 +192,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
 $settings    = getSettings();
 $currentLogo = setting_value($settings, 'company_logo');
-$currentDocumentLogo = setting_value($settings, 'document_logo');
 $currentFavicon = setting_value($settings, 'company_favicon', 'assets/img/favicon.png');
 $pageTitle   = 'System Settings';
 include 'includes/header.php';
@@ -376,31 +340,6 @@ include 'includes/header.php';
             <span class="settings-card-title">Invoice &amp; Receipt Settings</span>
         </div>
         <div class="settings-card-body">
-            <div class="settings-logo-wrap" style="margin-bottom:18px">
-                <div class="settings-logo-preview">
-                    <?php if ($currentDocumentLogo && file_exists(__DIR__ . '/' . ltrim($currentDocumentLogo,'/'))): ?>
-                        <img src="<?= h($currentDocumentLogo) ?>" alt="Document logo" id="docLogoPreviewImage">
-                    <?php else: ?>
-                        <span class="settings-logo-placeholder" id="docLogoPreviewPlaceholder">No document logo</span>
-                        <img src="" alt="Document logo" id="docLogoPreviewImage" class="settings-logo-hidden">
-                    <?php endif; ?>
-                </div>
-                <div class="settings-logo-fields">
-                    <div class="form-group">
-                        <label>Document Logo (Invoices, Receipts &amp; Quotations)</label>
-                        <input type="file" id="document_logo_file" name="document_logo_file"
-                               accept=".jpg,.jpeg,.png,.webp,.gif,.svg,image/*">
-                        <span class="settings-hint">Square or portrait logo recommended. Leave empty to fall back to the company logo.</span>
-                    </div>
-                    <input type="hidden" name="existing_document_logo" value="<?= h($currentDocumentLogo) ?>">
-                    <div class="form-group">
-                        <label>Or Manual Path</label>
-                        <input type="text" id="document_logo_manual"
-                               value="<?= h($currentDocumentLogo) ?>" placeholder="assets/img/logo.png">
-                        <span class="settings-hint">Optional path override.</span>
-                    </div>
-                </div>
-            </div>
             <div class="form-grid">
                 <div class="form-group">
                     <label>Invoice Prefix</label>
@@ -508,32 +447,6 @@ include 'includes/header.php';
                 previewImg.src = ev.target.result;
                 previewImg.classList.remove('settings-logo-hidden');
                 if (placeholder) placeholder.style.display = 'none';
-            };
-            reader.readAsDataURL(file);
-        });
-    }
-
-    const docFileInput   = document.getElementById('document_logo_file');
-    const docManualInput = document.getElementById('document_logo_manual');
-    const docHiddenPath  = document.querySelector('input[name="existing_document_logo"]');
-    const docPreviewImg  = document.getElementById('docLogoPreviewImage');
-    const docPlaceholder = document.getElementById('docLogoPreviewPlaceholder');
-
-    if (docManualInput && docHiddenPath) {
-        docManualInput.addEventListener('change', () => docHiddenPath.value = docManualInput.value.trim());
-    }
-
-    if (docFileInput) {
-        docFileInput.addEventListener('change', function () {
-            const file = this.files && this.files[0];
-            if (!file) return;
-            const reader = new FileReader();
-            reader.onload = ev => {
-                if (docPreviewImg) {
-                    docPreviewImg.src = ev.target.result;
-                    docPreviewImg.classList.remove('settings-logo-hidden');
-                }
-                if (docPlaceholder) docPlaceholder.style.display = 'none';
             };
             reader.readAsDataURL(file);
         });

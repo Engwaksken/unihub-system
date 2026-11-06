@@ -170,13 +170,8 @@ include 'includes/header.php';
 
 $currency    = $cfg['currency_symbol'] ?? 'UGX ';
 $companyName = $cfg['company_name']    ?? 'Unihub Solutions Uganda';
-$logoPath    = trim((string)($cfg['document_logo'] ?? ''));
-if ($logoPath === '' || !is_file(__DIR__ . '/' . ltrim($logoPath, '/\\'))) {
-    $logoPath = trim((string)($cfg['company_logo'] ?? ''));
-}
+$logoPath    = trim((string)($cfg['company_logo'] ?? ''));
 if ($logoPath === '' || !is_file(__DIR__ . '/' . ltrim($logoPath, '/\\'))) $logoPath = 'assets/img/logo.png';
-$watermarkLogo = trim((string)($cfg['company_logo'] ?? ''));
-if ($watermarkLogo === '' || !is_file(__DIR__ . '/' . ltrim($watermarkLogo, '/\\'))) $watermarkLogo = 'assets/img/logo.png';
 $status      = strtolower((string)$inv['status']);
 
 $statusLabel = strtoupper($inv['status']);
@@ -214,12 +209,17 @@ $canVoid   = $status !== 'paid' && $status !== 'void';
 
 <!-- Invoice paper -->
 <div class="uh-paper">
-    <div class="uh-watermark" aria-hidden="true"><img src="<?= h($watermarkLogo) ?>" alt=""></div>
+    <div class="uh-watermark" aria-hidden="true"><img src="<?= h($logoPath) ?>" alt=""></div>
 
     <!-- ── HEADER BAND ── -->
     <div class="uh-header">
         <div class="uh-brand">
             <img src="<?= h($logoPath) ?>" alt="<?= h($companyName) ?> Logo" class="uh-logo-landscape">
+            <div class="uh-brand-detail">
+                <?php if (!empty($cfg['company_address'])): ?><?= h($cfg['company_address']) ?><br><?php endif; ?>
+                <?php if (!empty($cfg['company_phone'])): ?><?= h($cfg['company_phone']) ?><?php endif; ?><?php if (!empty($cfg['company_phone']) && !empty($cfg['company_email'])): ?> | <?php endif; ?><?php if (!empty($cfg['company_email'])): ?><?= h($cfg['company_email']) ?><?php endif; ?><br>
+                <?php if (!empty($cfg['company_tin'])): ?>TIN: <?= h($cfg['company_tin']) ?><?php endif; ?>
+            </div>
         </div>
         <div class="uh-doc-badge">INVOICE</div>
     </div>
