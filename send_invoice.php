@@ -155,7 +155,8 @@ try {
     $companyTin     = (string)($cfg['company_tin'] ?? '');
     $companyWebsite = (string)($cfg['company_website'] ?? 'www.unihubug.com');
 
-    $configuredLogo = trim((string)($cfg['company_logo'] ?? ''));
+    $configuredLogo = trim((string)($cfg['document_logo'] ?? ''));
+    if ($configuredLogo === '') $configuredLogo = trim((string)($cfg['company_logo'] ?? ''));
     $logoFile = $configuredLogo !== '' ? realpath(__DIR__ . '/' . ltrim($configuredLogo, '/\\')) : false;
     $assetsRoot = realpath(__DIR__ . '/assets/img');
     if (!$logoFile || !$assetsRoot || !str_starts_with($logoFile, $assetsRoot . DIRECTORY_SEPARATOR) || !is_file($logoFile)) $logoFile = __DIR__ . '/assets/img/logo.png';

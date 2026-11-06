@@ -461,7 +461,8 @@ try {
 
     $amountPaid = (float)($rcp['amount_paid'] ?? 0);
 
-    $configuredLogo = trim((string)($cfg['company_logo'] ?? ''));
+    $configuredLogo = trim((string)($cfg['document_logo'] ?? ''));
+    if ($configuredLogo === '') $configuredLogo = trim((string)($cfg['company_logo'] ?? ''));
     $logoPath = $configuredLogo !== '' ? realpath(__DIR__ . '/' . ltrim($configuredLogo, '/\\')) : false;
     $assetsRoot = realpath(__DIR__ . '/assets/img');
     if (!$logoPath || !$assetsRoot || !str_starts_with($logoPath, $assetsRoot . DIRECTORY_SEPARATOR) || !is_file($logoPath)) $logoPath = __DIR__ . '/assets/img/logo.png';

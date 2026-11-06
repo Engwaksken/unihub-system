@@ -4,7 +4,10 @@ require_once 'config/db.php';
 $pageTitle = 'Quotations';
 $pdo = getDB();
 $cfg = getSettings();
-$quoteLogo = trim((string)($cfg['company_logo'] ?? ''));
+$quoteLogo = trim((string)($cfg['document_logo'] ?? ''));
+if ($quoteLogo === '' || !is_file(__DIR__ . '/' . ltrim($quoteLogo, '/\\'))) {
+    $quoteLogo = trim((string)($cfg['company_logo'] ?? ''));
+}
 if ($quoteLogo === '' || !is_file(__DIR__ . '/' . ltrim($quoteLogo, '/\\'))) $quoteLogo = 'assets/img/logo.png';
 ensureUserSignatureProfile($pdo);
 $pdo->exec("CREATE TABLE IF NOT EXISTS quotations (

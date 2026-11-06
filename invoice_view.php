@@ -170,7 +170,10 @@ include 'includes/header.php';
 
 $currency    = $cfg['currency_symbol'] ?? 'UGX ';
 $companyName = $cfg['company_name']    ?? 'Unihub Solutions Uganda';
-$logoPath    = trim((string)($cfg['company_logo'] ?? ''));
+$logoPath    = trim((string)($cfg['document_logo'] ?? ''));
+if ($logoPath === '' || !is_file(__DIR__ . '/' . ltrim($logoPath, '/\\'))) {
+    $logoPath = trim((string)($cfg['company_logo'] ?? ''));
+}
 if ($logoPath === '' || !is_file(__DIR__ . '/' . ltrim($logoPath, '/\\'))) $logoPath = 'assets/img/logo.png';
 $status      = strtolower((string)$inv['status']);
 
