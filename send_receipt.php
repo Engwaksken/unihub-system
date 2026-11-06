@@ -317,6 +317,12 @@ body {
     margin-bottom: 8px;
 }
 
+.uh-sig-stamp-image img {
+    width: 150px;
+    height: 150px;
+    object-fit: contain;
+}
+
 .uh-sig-name {
     font-size: 11px;
     font-weight: 700;
@@ -479,6 +485,23 @@ try {
         $logoData = file_get_contents($logoPath);
         if ($logoData !== false) {
             $logoDataUri = 'data:' . $logoMime . ';base64,' . base64_encode($logoData);
+        }
+    }
+
+    $stampDataUri = '';
+    $configuredStamp = trim((string)($cfg['company_stamp'] ?? ''));
+    $stampPath = $configuredStamp !== '' ? realpath(__DIR__ . '/' . ltrim($configuredStamp, '/\\')) : false;
+    if ($stampPath && $assetsRoot && str_starts_with($stampPath, $assetsRoot . DIRECTORY_SEPARATOR) && is_file($stampPath)) {
+        $stampExt = strtolower((string)pathinfo($stampPath, PATHINFO_EXTENSION));
+        $stampMime = match ($stampExt) {
+            'jpg', 'jpeg' => 'image/jpeg',
+            'webp'        => 'image/webp',
+            'svg'         => 'image/svg+xml',
+            default       => 'image/png',
+        };
+        $stampData = file_get_contents($stampPath);
+        if ($stampData !== false) {
+            $stampDataUri = 'data:' . $stampMime . ';base64,' . base64_encode($stampData);
         }
     }
 
@@ -734,9 +757,36 @@ try {
                             <?php endif; ?>
                         </td>
                         <td>
-                            <div class="uh-sig-area-label">Client Acknowledgement</div>
-                            <div style="height:80px;"></div>
-                            <div class="uh-sig-underline">Client Acknowledgement</div>
+                            <div class="uh-sig-area-label">Official Stamp</div>
+                            <div class="uh-sig-stamp-image">
+                                <?php if ($stampDataUri !== ''): ?>
+                                    <img src="<?= h($stampDataUri) ?>" alt="Official Stamp">
+                                <?php else: ?>
+                                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="147 48 302 242" width="150" height="150">
+                                        <defs>
+                                            <path id="pdfTopArc" d="M 147.64,60 A 107.64,107.64 0 0,1 362.92,60"/>
+                                            <path id="pdfBotArc" d="M 158,185 A 107.64,107.64 0 0,0 352.56,185"/>
+                                        </defs>
+                                        <circle cx="297.64" cy="168" r="120" fill="#1a2a72"/>
+                                        <circle cx="297.64" cy="168" r="112" fill="#ffffff"/>
+                                        <circle cx="297.64" cy="168" r="108" fill="#1a2a72"/>
+                                        <circle cx="297.64" cy="168" r="96" fill="#ffffff"/>
+                                        <circle cx="297.64" cy="168" r="84" fill="none" stroke="#1a2a72" stroke-width="1" stroke-dasharray="4,3" opacity="0.3"/>
+                                        <text font-family="Arial Narrow,Arial,sans-serif" font-weight="700" font-size="11.5" fill="#1a2a72" letter-spacing="4">
+                                            <textPath href="#pdfTopArc" startOffset="6%">UNIHUB SOLUTIONS UGANDA</textPath>
+                                        </text>
+                                        <text font-family="Arial,sans-serif" font-weight="700" font-size="10" fill="#fc7f10" letter-spacing="5.5">
+                                            <textPath href="#pdfBotArc" startOffset="8%">DIGITAL ACCESS FOR ALL</textPath>
+                                        </text>
+                                        <rect x="271" y="134" width="52" height="52" rx="7" fill="#fc7f10"/>
+                                        <path d="M281 143 L281 168 Q281 180 297 180 Q313 180 313 168 L313 143 L305 143 L305 168 Q305 173 297 173 Q289 173 289 168 L289 143 Z" fill="#ffffff"/>
+                                        <text x="297.64" y="207" font-family="Arial Narrow,Arial,sans-serif" font-weight="bold" font-size="22" fill="#1a2a72" text-anchor="middle" letter-spacing="1">UNIHUB</text>
+                                        <text x="297.64" y="220" font-family="Arial,sans-serif" font-weight="700" font-size="8" fill="#64748b" text-anchor="middle" letter-spacing="3">SOLUTIONS</text>
+                                        <text x="175" y="172" font-size="10" fill="#fc7f10" text-anchor="middle">&#9733;</text>
+                                        <text x="420" y="172" font-size="10" fill="#fc7f10" text-anchor="middle">&#9733;</text>
+                                    </svg>
+                                <?php endif; ?>
+                            </div>
                         </td>
                     </tr>
                 </table>
