@@ -162,6 +162,11 @@ try {
     if (!$logoFile || !$assetsRoot || !str_starts_with($logoFile, $assetsRoot . DIRECTORY_SEPARATOR) || !is_file($logoFile)) $logoFile = __DIR__ . '/assets/img/logo.png';
     $logoDataUri = assetDataUri($logoFile);
 
+    $siteLogo = trim((string)($cfg['company_logo'] ?? ''));
+    $watermarkFile = $siteLogo !== '' ? realpath(__DIR__ . '/' . ltrim($siteLogo, '/\\')) : false;
+    if (!$watermarkFile || !$assetsRoot || !str_starts_with($watermarkFile, $assetsRoot . DIRECTORY_SEPARATOR) || !is_file($watermarkFile)) $watermarkFile = __DIR__ . '/assets/img/logo.png';
+    $watermarkDataUri = assetDataUri($watermarkFile);
+
     $status = strtolower((string)($inv['status'] ?? 'pending'));
     $statusLabel = strtoupper((string)($inv['status'] ?? 'PENDING'));
 
@@ -600,8 +605,8 @@ CSS;
 </head>
 <body>
 <div class="uh-pdf-wrap">
-    <?php if ($logoDataUri !== ''): ?>
-        <img src="<?= h($logoDataUri) ?>" class="uh-pdf-watermark" alt="Watermark">
+    <?php if ($watermarkDataUri !== ''): ?>
+        <img src="<?= h($watermarkDataUri) ?>" class="uh-pdf-watermark" alt="Watermark">
     <?php endif; ?>
 
     <div class="uh-pdf-content">

@@ -175,6 +175,8 @@ if ($logoPath === '' || !is_file(__DIR__ . '/' . ltrim($logoPath, '/\\'))) {
     $logoPath = trim((string)($cfg['company_logo'] ?? ''));
 }
 if ($logoPath === '' || !is_file(__DIR__ . '/' . ltrim($logoPath, '/\\'))) $logoPath = 'assets/img/logo.png';
+$watermarkLogo = trim((string)($cfg['company_logo'] ?? ''));
+if ($watermarkLogo === '' || !is_file(__DIR__ . '/' . ltrim($watermarkLogo, '/\\'))) $watermarkLogo = 'assets/img/logo.png';
 $status      = strtolower((string)$inv['status']);
 
 $statusLabel = strtoupper($inv['status']);
@@ -212,7 +214,7 @@ $canVoid   = $status !== 'paid' && $status !== 'void';
 
 <!-- Invoice paper -->
 <div class="uh-paper">
-    <div class="uh-watermark" aria-hidden="true"><img src="<?= h($logoPath) ?>" alt=""></div>
+    <div class="uh-watermark" aria-hidden="true"><img src="<?= h($watermarkLogo) ?>" alt=""></div>
 
     <!-- ── HEADER BAND ── -->
     <div class="uh-header">

@@ -482,6 +482,24 @@ try {
         }
     }
 
+    $siteLogo = trim((string)($cfg['company_logo'] ?? ''));
+    $watermarkLogoPath = $siteLogo !== '' ? realpath(__DIR__ . '/' . ltrim($siteLogo, '/\\')) : false;
+    if (!$watermarkLogoPath || !$assetsRoot || !str_starts_with($watermarkLogoPath, $assetsRoot . DIRECTORY_SEPARATOR) || !is_file($watermarkLogoPath)) $watermarkLogoPath = __DIR__ . '/assets/img/logo.png';
+    $watermarkDataUri = '';
+    if (is_file($watermarkLogoPath)) {
+        $wmExt = strtolower((string)pathinfo($watermarkLogoPath, PATHINFO_EXTENSION));
+        $wmMime = match ($wmExt) {
+            'jpg', 'jpeg' => 'image/jpeg',
+            'webp'        => 'image/webp',
+            'svg'         => 'image/svg+xml',
+            default       => 'image/png',
+        };
+        $wmData = file_get_contents($watermarkLogoPath);
+        if ($wmData !== false) {
+            $watermarkDataUri = 'data:' . $wmMime . ';base64,' . base64_encode($wmData);
+        }
+    }
+
     $signatureDataUri = '';
     $profileSignature = trim((string)($rcp['signature_data'] ?? ''));
     if (str_starts_with($profileSignature, 'data:image/')) {
@@ -533,8 +551,8 @@ try {
 </head>
 <body>
 <div class="uh-pdf-doc">
-    <?php if ($logoDataUri !== ''): ?>
-        <img src="<?= h($logoDataUri) ?>" class="uh-pdf-watermark" alt="Watermark">
+    <?php if ($watermarkDataUri !== ''): ?>
+        <img src="<?= h($watermarkDataUri) ?>" class="uh-pdf-watermark" alt="Watermark">
     <?php endif; ?>
 
     <div class="uh-pdf-content">

@@ -9,6 +9,8 @@ if ($quoteLogo === '' || !is_file(__DIR__ . '/' . ltrim($quoteLogo, '/\\'))) {
     $quoteLogo = trim((string)($cfg['company_logo'] ?? ''));
 }
 if ($quoteLogo === '' || !is_file(__DIR__ . '/' . ltrim($quoteLogo, '/\\'))) $quoteLogo = 'assets/img/logo.png';
+$watermarkLogo = trim((string)($cfg['company_logo'] ?? ''));
+if ($watermarkLogo === '' || !is_file(__DIR__ . '/' . ltrim($watermarkLogo, '/\\'))) $watermarkLogo = 'assets/img/logo.png';
 ensureUserSignatureProfile($pdo);
 $pdo->exec("CREATE TABLE IF NOT EXISTS quotations (
     id INT UNSIGNED NOT NULL AUTO_INCREMENT PRIMARY KEY,
@@ -261,6 +263,7 @@ include 'includes/header.php';
     </form>
 </div>
 
+<style>.print-quote::before{background-image:url('<?= h($watermarkLogo) ?>')}</style>
 <div class="print-quote">
     <div class="quote-header">
         <div class="quote-brand"><img src="<?= h($quoteLogo) ?>" alt="<?= h($cfg['company_name'] ?? 'Company') ?> logo" class="uh-logo-landscape"><div class="quote-muted"><?= h($cfg['company_address'] ?? '') ?><br><?= h($cfg['company_phone'] ?? '') ?><?php if (!empty($cfg['company_email'])): ?> | <?= h($cfg['company_email']) ?><?php endif; ?><br><?php if (!empty($cfg['company_tin'])): ?>TIN: <?= h($cfg['company_tin']) ?><?php endif; ?></div></div>
