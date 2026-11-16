@@ -40,7 +40,8 @@ $requiredKeys = [
     'payment_terms','vat_rate','bank_name','account_name',
     'account_number','bank_branch','company_logo','company_favicon','company_stamp',
     'efris_enabled','efris_environment','efris_taxpayer_type','efris_branch_id','efris_device_id',
-    'brand_primary_color','brand_accent_color','brand_font_family'
+    'brand_primary_color','brand_accent_color','brand_font_family',
+    'auto_reminders_enabled','reminder_interval_days'
 ];
 
 ensureSettingsKeys($pdo, $requiredKeys);
@@ -67,6 +68,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         $receiptPrefix  = trim($_POST['receipt_prefix']  ?? 'RCP');
         $paymentTerms   = trim($_POST['payment_terms']   ?? '30');
         $vatRate        = trim($_POST['vat_rate']        ?? '18');
+        $autoReminders  = isset($_POST['auto_reminders_enabled']) ? '1' : '0';
+        $reminderDays   = (string)max(1, (int)($_POST['reminder_interval_days'] ?? 7));
         $bankName       = trim($_POST['bank_name']       ?? '');
         $accountName    = trim($_POST['account_name']    ?? '');
         $accountNumber  = trim($_POST['account_number']  ?? '');
@@ -205,6 +208,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             'brand_primary_color' => $brandPrimaryColor,
             'brand_accent_color' => $brandAccentColor,
             'brand_font_family' => $brandFontFamily,
+            'auto_reminders_enabled' => $autoReminders,
+            'reminder_interval_days' => $reminderDays,
         ] as $k => $v) saveSetting($pdo, $k, $v);
         if ($canManageEfris) {
             foreach ([
@@ -440,6 +445,14 @@ include 'includes/header.php';
                 <div class="form-group settings-full-col">
                     <label>Invoice Footer / Payment Instructions</label>
                     <textarea name="invoice_footer"><?= h(setting_value($settings,'invoice_footer')) ?></textarea>
+                </div>
+                <div class="form-group settings-full-col">
+                    <label><input type="checkbox" name="auto_reminders_enabled" value="1" <?= setting_value($settings, 'auto_reminders_enabled') !== '0' ? 'checked' : '' ?>> Automatically email payment reminders to clients with pending invoices</label>
+                </div>
+                <div class="form-group">
+                    <label for="reminder_interval_days">Reminder Interval (Days)</label>
+                    <input type="number" id="reminder_interval_days" name="reminder_interval_days" min="1"
+                           value="<?= h(setting_value($settings, 'reminder_interval_days') !== '' ? setting_value($settings, 'reminder_interval_days') : '7') ?>">
                 </div>
             </div>
         </div>

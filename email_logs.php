@@ -94,6 +94,7 @@ include __DIR__ . '/includes/header.php';
             <option value="">All Types</option>
             <option value="invoice" <?= $typeFilter==='invoice'?'selected':'' ?>>Invoice</option>
             <option value="receipt" <?= $typeFilter==='receipt'?'selected':'' ?>>Receipt</option>
+            <option value="reminder" <?= $typeFilter==='reminder'?'selected':'' ?>>Payment Reminder</option>
             <option value="other"   <?= $typeFilter==='other'  ?'selected':'' ?>>Other</option>
         </select>
         <label>From <input type="date" name="date_from" value="<?= h($dateFrom) ?>"></label>
@@ -128,7 +129,7 @@ include __DIR__ . '/includes/header.php';
             <?php foreach ($rows as $row): ?>
             <tr>
                 <td>
-                    <span class="badge <?= $row['email_type']==='invoice' ? 'badge-invoiced' : 'badge-paid' ?>">
+                    <span class="badge <?= match($row['email_type']) { 'invoice' => 'badge-invoiced', 'reminder' => 'badge-unpaid', default => 'badge-paid' } ?>">
                         <?= h($row['email_type']) ?>
                     </span>
                 </td>
@@ -163,6 +164,8 @@ include __DIR__ . '/includes/header.php';
                         <?php if ($row['email_type'] === 'invoice'): ?>
                             <a class="btn btn-ghost btn-sm" title="View invoice" aria-label="View invoice" href="invoice_view.php?id=<?= (int)$row['reference_id'] ?>"><i class="fas fa-eye"></i></a>
                             <button class="btn btn-primary btn-sm" title="Resend email" aria-label="Resend email" onclick="resendLog('invoice', <?= (int)$row['reference_id'] ?>)"><i class="fas fa-paper-plane"></i></button>
+                        <?php elseif ($row['email_type'] === 'reminder'): ?>
+                            <a class="btn btn-ghost btn-sm" title="View invoice" aria-label="View invoice" href="invoice_view.php?id=<?= (int)$row['reference_id'] ?>"><i class="fas fa-eye"></i></a>
                         <?php elseif ($row['email_type'] === 'receipt'): ?>
                             <a class="btn btn-ghost btn-sm" title="View receipt" aria-label="View receipt" href="receipt_view.php?id=<?= (int)$row['reference_id'] ?>"><i class="fas fa-eye"></i></a>
                             <button class="btn btn-primary btn-sm" title="Resend email" aria-label="Resend email" onclick="resendLog('receipt', <?= (int)$row['reference_id'] ?>)"><i class="fas fa-paper-plane"></i></button>

@@ -10,9 +10,9 @@ $stats = $pdo->query("
         (SELECT COUNT(*) FROM clients) AS total_clients,
         (SELECT COUNT(*) FROM orders) AS total_orders,
         (SELECT COUNT(*) FROM invoices) AS total_invoices,
-        (SELECT COUNT(*) FROM invoices WHERE status = 'unpaid') AS unpaid_count,
+        (SELECT COUNT(*) FROM invoices WHERE status IN ('unpaid', 'overdue')) AS unpaid_count,
         (SELECT COALESCE(SUM(total), 0) FROM invoices WHERE status = 'paid') AS total_collected,
-        (SELECT COALESCE(SUM(total), 0) FROM invoices WHERE status = 'unpaid') AS total_outstanding
+        (SELECT COALESCE(SUM(total), 0) FROM invoices WHERE status IN ('unpaid', 'overdue')) AS total_outstanding
 ")->fetch(PDO::FETCH_ASSOC);
 
 $recent_orders = $pdo->query("
