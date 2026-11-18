@@ -1,5 +1,6 @@
 <?php
 require_once 'config/db.php';
+require_once __DIR__ . '/includes/stamp.php';
 
 $cfg = getSettings();
 $pdo = getDB();
@@ -91,11 +92,7 @@ if ($signaturePath !== '') {
     }
 }
 
-$stampPath = trim((string)($cfg['company_stamp'] ?? ''));
-$stampUrl  = '';
-if ($stampPath !== '' && is_file(__DIR__ . '/' . ltrim($stampPath, '/\\'))) {
-    $stampUrl = $stampPath;
-}
+$stampUrl = uh_stamp_resolve($cfg, __DIR__) ?? '';
 
 $paymentDate = !empty($rcp['payment_date']) ? date('d F Y', strtotime($rcp['payment_date'])) : '-';
 $paymentMethod = ucwords(str_replace('_', ' ', (string)($rcp['payment_method'] ?? '')));

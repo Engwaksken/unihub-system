@@ -1,5 +1,6 @@
 <?php
 require_once 'config/db.php';
+require_once __DIR__ . '/includes/stamp.php';
 
 $pdo = getDB();
 
@@ -38,7 +39,7 @@ $requiredKeys = [
     'company_tin','company_website','currency','currency_symbol',
     'invoice_footer','invoice_prefix','order_prefix','receipt_prefix',
     'payment_terms','vat_rate','bank_name','account_name',
-    'account_number','bank_branch','company_logo','company_favicon','company_stamp',
+    'account_number','bank_branch','company_logo','company_favicon','company_stamp','stamp_mode','stamp_bottom_text',
     'efris_enabled','efris_environment','efris_taxpayer_type','efris_branch_id','efris_device_id',
     'brand_primary_color','brand_accent_color','brand_font_family',
     'auto_reminders_enabled','reminder_interval_days'
@@ -77,6 +78,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         $brandPrimaryColor = trim((string)($_POST['brand_primary_color'] ?? '#1a2a72'));
         $brandAccentColor = trim((string)($_POST['brand_accent_color'] ?? '#fc7f10'));
         $brandFontFamily = trim((string)($_POST['brand_font_family'] ?? 'DM Sans'));
+        $stampMode      = (string)($_POST['stamp_mode'] ?? 'generated');
+        $stampBottomText = trim((string)($_POST['stamp_bottom_text'] ?? ''));
         $efrisEnabled   = $canManageEfris ? (isset($_POST['efris_enabled']) ? '1' : '0') : setting_value($storedEfrisSettings, 'efris_enabled', '0');
         $efrisEnvironment = $canManageEfris ? trim((string)($_POST['efris_environment'] ?? 'uat')) : setting_value($storedEfrisSettings, 'efris_environment', 'uat');
         $efrisTaxpayerType = $canManageEfris ? trim((string)($_POST['efris_taxpayer_type'] ?? 'vat_registered')) : setting_value($storedEfrisSettings, 'efris_taxpayer_type', 'vat_registered');
@@ -84,6 +87,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         $efrisDeviceId  = $canManageEfris ? trim((string)($_POST['efris_device_id'] ?? '')) : setting_value($storedEfrisSettings, 'efris_device_id');
 
         if ($companyName === '') throw new RuntimeException('Company name is required.');
+        if (!in_array($stampMode, ['generated', 'uploaded'], true)) throw new RuntimeException('Select a valid stamp type.');
+        if (mb_strlen($stampBottomText, 'UTF-8') > 60) throw new RuntimeException('Stamp bottom text must be 60 characters or fewer.');
         if (strlen($companyTagline) > 180) throw new RuntimeException('Company tagline must be 180 characters or fewer.');
         if ($companyEmail !== '' && !filter_var($companyEmail, FILTER_VALIDATE_EMAIL))
             throw new RuntimeException('Please enter a valid company email address.');
@@ -179,7 +184,10 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 throw new RuntimeException('Failed to save uploaded stamp.');
 
             $stampPath = 'assets/img/uploads/settings/' . $fileName;
+            $stampMode = 'uploaded'; // a freshly uploaded stamp is the one to use
         }
+        if ($stampMode === 'uploaded' && ($stampPath === '' || !is_file(__DIR__ . '/' . ltrim($stampPath, '/\\'))))
+            throw new RuntimeException('Upload a stamp image or choose the auto-generated stamp.');
 
         $pdo->beginTransaction();
         foreach ([
@@ -205,6 +213,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             'company_logo'    => $logoPath,
             'company_favicon' => $faviconPath,
             'company_stamp'   => $stampPath,
+            'stamp_mode'      => $stampMode,
+            'stamp_bottom_text' => $stampBottomText,
             'brand_primary_color' => $brandPrimaryColor,
             'brand_accent_color' => $brandAccentColor,
             'brand_font_family' => $brandFontFamily,
@@ -233,6 +243,8 @@ $settings    = getSettings();
 $currentLogo = setting_value($settings, 'company_logo');
 $currentFavicon = setting_value($settings, 'company_favicon', 'assets/img/favicon.png');
 $currentStamp = setting_value($settings, 'company_stamp');
+$currentStampMode = setting_value($settings, 'stamp_mode') ?: ($currentStamp !== '' ? 'uploaded' : 'generated');
+$activeStamp = uh_stamp_resolve($settings, __DIR__) ?? '';
 $pageTitle   = 'System Settings';
 include 'includes/header.php';
 ?>
@@ -343,8 +355,8 @@ include 'includes/header.php';
 
             <div class="settings-logo-wrap" style="margin-top:18px;padding-top:18px;border-top:1px dashed var(--border)">
                 <div class="settings-logo-preview">
-                    <?php if ($currentStamp && file_exists(__DIR__ . '/' . ltrim($currentStamp,'/'))): ?>
-                        <img src="<?= h($currentStamp) ?>" alt="Stamp" id="stampPreviewImage">
+                    <?php if ($activeStamp !== ''): ?>
+                        <img src="<?= h($activeStamp) ?>?v=<?= (int)@filemtime(__DIR__ . '/' . $activeStamp) ?>" alt="Stamp" id="stampPreviewImage">
                     <?php else: ?>
                         <span class="settings-logo-placeholder" id="stampPreviewPlaceholder">No stamp</span>
                         <img src="" alt="Stamp" id="stampPreviewImage" class="settings-logo-hidden">
@@ -352,10 +364,25 @@ include 'includes/header.php';
                 </div>
                 <div class="settings-logo-fields">
                     <div class="form-group">
+                        <label>Stamp Type</label>
+                        <select name="stamp_mode" id="stamp_mode">
+                            <option value="generated" <?= $currentStampMode !== 'uploaded' ? 'selected' : '' ?>>Auto-generate around company logo</option>
+                            <option value="uploaded" <?= $currentStampMode === 'uploaded' ? 'selected' : '' ?>>Use uploaded stamp image</option>
+                        </select>
+                        <span class="settings-hint">The generated seal puts the company name around the top, the bottom text below and your logo in the centre. Save to refresh the preview.</span>
+                    </div>
+                    <div class="form-group">
+                        <label>Stamp Bottom Text</label>
+                        <input type="text" name="stamp_bottom_text" maxlength="60"
+                               value="<?= h(setting_value($settings, 'stamp_bottom_text')) ?>"
+                               placeholder="<?= h(setting_value($settings, 'company_tagline') ?: 'Official Stamp') ?>">
+                        <span class="settings-hint">Optional. Defaults to the company tagline.</span>
+                    </div>
+                    <div class="form-group">
                         <label>Official Stamp / Seal</label>
                         <input type="file" id="company_stamp_file" name="company_stamp_file"
                                accept=".jpg,.jpeg,.png,.webp,.gif,.svg,image/*">
-                        <span class="settings-hint">Transparent PNG recommended. Used on receipts. Leave empty to keep the default seal.</span>
+                        <span class="settings-hint">Transparent PNG recommended. Uploading switches the stamp type to the uploaded image.</span>
                     </div>
                     <input type="hidden" name="existing_company_stamp" value="<?= h($currentStamp) ?>">
                     <div class="form-group">

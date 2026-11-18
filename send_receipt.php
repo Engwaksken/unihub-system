@@ -3,6 +3,7 @@ declare(strict_types=1);
 
 require_once 'config/db.php';
 require_once 'email-function.php';
+require_once __DIR__ . '/includes/stamp.php';
 
 header('Content-Type: application/json; charset=utf-8');
 
@@ -489,7 +490,7 @@ try {
     }
 
     $stampDataUri = '';
-    $configuredStamp = trim((string)($cfg['company_stamp'] ?? ''));
+    $configuredStamp = uh_stamp_resolve($cfg, __DIR__) ?? '';
     $stampPath = $configuredStamp !== '' ? realpath(__DIR__ . '/' . ltrim($configuredStamp, '/\\')) : false;
     if ($stampPath && $assetsRoot && str_starts_with($stampPath, $assetsRoot . DIRECTORY_SEPARATOR) && is_file($stampPath)) {
         $stampExt = strtolower((string)pathinfo($stampPath, PATHINFO_EXTENSION));
