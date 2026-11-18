@@ -105,7 +105,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             if (!$result['success'])
                 throw new RuntimeException($result['error'] ?: $result['message'] ?: 'Test email failed.');
 
-            $success = 'Test email sent successfully to ' . $testEmail . '.';
+            $success = 'Test email sent to ' . $testEmail . '. ' . ($result['message'] ?? '');
             $current = getLatestEmailSettings($pdo) ?: $current;
         }
     } catch (Throwable $e) {
@@ -187,7 +187,9 @@ include __DIR__ . '/includes/header.php';
                 <div class="form-group email-info-box">
                     For Gmail, use:
                     <code class="email-code-hint">Host: smtp.gmail.com &nbsp;|&nbsp; Port: 587 &nbsp;|&nbsp; Security: TLS</code>
-                    Use a Google App Password, not your normal Gmail password.
+                    Use a Google App Password, not your normal Gmail password.<br>
+                    On cPanel hosting (outbound SMTP is often blocked), use your own mailbox:
+                    <code class="email-code-hint">Host: mail.yourdomain.com &nbsp;|&nbsp; Port: 465 &nbsp;|&nbsp; Security: SSL</code>
                 </div>
             </div>
             <div class="settings-actions-bar" style="margin-top:18px">

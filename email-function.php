@@ -94,13 +94,22 @@ if (!function_exists('ef_get_email_settings')) {
             throw new RuntimeException('From email is missing.');
         }
 
-        if ($smtpSecure === 'ssl') {
+        // Users often pick a port/security pair that cannot work together (e.g. 465 + TLS).
+        // Port 465 always needs implicit SSL; 587 always needs STARTTLS.
+        if ($smtpPort === 465) {
+            $smtpSecure = PHPMailer::ENCRYPTION_SMTPS;
+        } elseif ($smtpPort === 587) {
+            $smtpSecure = PHPMailer::ENCRYPTION_STARTTLS;
+        } elseif ($smtpSecure === 'ssl' || $smtpSecure === 'smtps') {
             $smtpSecure = PHPMailer::ENCRYPTION_SMTPS;
         } elseif ($smtpSecure === 'tls' || $smtpSecure === 'starttls') {
             $smtpSecure = PHPMailer::ENCRYPTION_STARTTLS;
-        } elseif ($smtpSecure === 'none' || $smtpSecure === '') {
+        } else {
             $smtpSecure = '';
         }
+
+        // Strip a scheme the user may have typed into the host field (e.g. "ssl://mail.example.com").
+        $smtpHost = preg_replace('~^(ssl|tls)://~i', '', $smtpHost) ?? $smtpHost;
 
         return [
             'id'            => (int)$row['id'],
@@ -115,6 +124,171 @@ if (!function_exists('ef_get_email_settings')) {
     }
 }
 
+if (class_exists(PHPMailer::class) && !class_exists('UnihubMailer', false)) {
+    /**
+     * PHPMailer that survives "SMTP Error: Could not connect to SMTP host."
+     *
+     * When the configured connection cannot be established it retries, in order:
+     *   1. the configured host/port/security with strict certificate checks
+     *   2. the same, accepting the shared-host certificate (cPanel mail.<domain> name mismatch)
+     *   3. the same host on the alternate port (465 <-> 587)
+     *   4. the local mail server (localhost:25), which cPanel hosts allow even when outbound SMTP is blocked
+     *   5. PHP mail() (sendmail/exim)
+     * Only connection failures trigger a retry; auth or recipient errors are reported immediately.
+     * Set SMTP_FALLBACK=false in .env to use only the configured connection.
+     */
+    class UnihubMailer extends PHPMailer
+    {
+        /** Which attempt delivered the last message, e.g. "smtp mail.example.com:465 (ssl)". */
+        public string $transportUsed = '';
+
+        private array $smtpConfig;
+        private array $transcript = [];
+
+        public function __construct(array $smtpConfig)
+        {
+            parent::__construct(true);
+            $this->smtpConfig = $smtpConfig;
+            $this->CharSet    = 'UTF-8';
+            $this->Timeout    = 10;
+            $this->isHTML(true);
+
+            // Keep a transcript for error messages, never echo it into the page.
+            // CLIENT -> SERVER lines are dropped because they include the base64 AUTH credentials.
+            $this->SMTPDebug   = \PHPMailer\PHPMailer\SMTP::DEBUG_CONNECTION;
+            $this->Debugoutput = function (string $line): void {
+                $line = trim(preg_replace('/\s+/', ' ', $line) ?? $line);
+                if ($line !== '' && stripos($line, 'CLIENT -> SERVER') === false) {
+                    $this->transcript[] = $line;
+                }
+            };
+
+            $this->setFrom((string)$smtpConfig['from_email'], (string)$smtpConfig['from_name']);
+        }
+
+        public function send()
+        {
+            $errors = [];
+
+            foreach ($this->deliveryAttempts() as $attempt) {
+                $this->applyAttempt($attempt);
+                $this->transcript = [];
+
+                try {
+                    if (parent::send()) {
+                        $this->transportUsed = $attempt['label'];
+                        return true;
+                    }
+                    $errors[] = $attempt['label'] . ': ' . $this->ErrorInfo;
+                } catch (\PHPMailer\PHPMailer\Exception $e) {
+                    $errors[] = $attempt['label'] . ': ' . $e->getMessage() . $this->transcriptTail();
+                    if (!$this->isConnectionFailure($e->getMessage())) {
+                        // Bad password, rejected recipient, etc. Another route would not help.
+                        break;
+                    }
+                } finally {
+                    $this->smtpClose();
+                }
+            }
+
+            throw new \PHPMailer\PHPMailer\Exception(
+                'Email could not be delivered. ' . implode(' | ', $errors)
+                . ' Check the SMTP host/port in Email Settings; on cPanel hosting use mail.<your-domain> '
+                . 'with port 465 (SSL) and the full mailbox address as username.'
+            );
+        }
+
+        private function deliveryAttempts(): array
+        {
+            $host   = (string)$this->smtpConfig['smtp_host'];
+            $port   = (int)$this->smtpConfig['smtp_port'];
+            $secure = (string)$this->smtpConfig['smtp_secure'];
+            $auth   = (string)$this->smtpConfig['smtp_user'] !== '' || (string)$this->smtpConfig['smtp_password'] !== '';
+
+            $attempts = [[
+                'label' => "smtp {$host}:{$port} (" . ($secure ?: 'plain') . ')',
+                'type' => 'smtp', 'host' => $host, 'port' => $port, 'secure' => $secure,
+                'auth' => $auth, 'relaxed' => false,
+            ]];
+
+            if (strtolower((string)appEnv('SMTP_FALLBACK', 'true')) === 'false') {
+                return $attempts;
+            }
+
+            if ($secure !== '') {
+                $attempts[] = ['label' => "smtp {$host}:{$port} ({$secure}, unverified cert)", 'relaxed' => true] + $attempts[0];
+            }
+
+            if ($port === 465) {
+                $attempts[] = [
+                    'label' => "smtp {$host}:587 (tls)", 'type' => 'smtp', 'host' => $host, 'port' => 587,
+                    'secure' => PHPMailer::ENCRYPTION_STARTTLS, 'auth' => $auth, 'relaxed' => true,
+                ];
+            } else {
+                $attempts[] = [
+                    'label' => "smtp {$host}:465 (ssl)", 'type' => 'smtp', 'host' => $host, 'port' => 465,
+                    'secure' => PHPMailer::ENCRYPTION_SMTPS, 'auth' => $auth, 'relaxed' => true,
+                ];
+            }
+
+            if (!in_array(strtolower($host), ['localhost', '127.0.0.1'], true)) {
+                $attempts[] = [
+                    'label' => 'smtp localhost:25', 'type' => 'smtp', 'host' => 'localhost', 'port' => 25,
+                    'secure' => '', 'auth' => false, 'relaxed' => true,
+                ];
+            }
+
+            if (function_exists('mail') && !in_array('mail', array_map('trim', explode(',', (string)ini_get('disable_functions'))), true)) {
+                $attempts[] = ['label' => 'php mail()', 'type' => 'mail'];
+            }
+
+            return $attempts;
+        }
+
+        private function applyAttempt(array $attempt): void
+        {
+            if ($attempt['type'] === 'mail') {
+                $this->isMail();
+                return;
+            }
+
+            $this->isSMTP();
+            $this->Host        = $attempt['host'];
+            $this->Port        = $attempt['port'];
+            $this->SMTPSecure  = $attempt['secure'];
+            $this->SMTPAutoTLS = $attempt['host'] !== 'localhost';
+            $this->SMTPAuth    = $attempt['auth'];
+            $this->Username    = $attempt['auth'] ? (string)$this->smtpConfig['smtp_user'] : '';
+            $this->Password    = $attempt['auth'] ? (string)$this->smtpConfig['smtp_password'] : '';
+            $this->SMTPOptions = $attempt['relaxed']
+                ? ['ssl' => ['verify_peer' => false, 'verify_peer_name' => false, 'allow_self_signed' => true]]
+                : [];
+        }
+
+        private function isConnectionFailure(string $message): bool
+        {
+            return stripos($message, 'Could not connect to SMTP host') !== false
+                || stripos($message, static::lang('connect_host')) !== false;
+        }
+
+        private function transcriptTail(): string
+        {
+            // The "SMTP ERROR: ..." line carries the real reason (timeout, refused, cert mismatch).
+            $best = '';
+            foreach ($this->transcript as $line) {
+                if (stripos($line, 'SMTP ERROR') !== false || stripos($line, 'certificate') !== false) {
+                    $best = $line;
+                    break;
+                }
+            }
+            if ($best === '' && $this->transcript) {
+                $best = (string)end($this->transcript);
+            }
+            return $best !== '' ? ' [' . mb_strimwidth($best, 0, 220, '...') . ']' : '';
+        }
+    }
+}
+
 if (!function_exists('ef_build_mailer')) {
     function ef_build_mailer(array $smtp): PHPMailer
     {
@@ -122,24 +296,7 @@ if (!function_exists('ef_build_mailer')) {
             throw new RuntimeException('PHPMailer is not installed. Run: composer require phpmailer/phpmailer');
         }
 
-        $mail = new PHPMailer(true);
-        $mail->isSMTP();
-        $mail->Host       = (string)$smtp['smtp_host'];
-        $mail->Port       = (int)$smtp['smtp_port'];
-        $mail->SMTPAuth   = !empty($smtp['smtp_user']) || !empty($smtp['smtp_password']);
-        $mail->Username   = (string)$smtp['smtp_user'];
-        $mail->Password   = (string)$smtp['smtp_password'];
-        $mail->CharSet    = 'UTF-8';
-        $mail->isHTML(true);
-        $mail->Timeout    = 30;
-
-        if (!empty($smtp['smtp_secure'])) {
-            $mail->SMTPSecure = (string)$smtp['smtp_secure'];
-        }
-
-        $mail->setFrom((string)$smtp['from_email'], (string)$smtp['from_name']);
-
-        return $mail;
+        return new UnihubMailer($smtp);
     }
 }
 
@@ -269,9 +426,11 @@ if (!function_exists('ef_send_email')) {
 
             $mail->send();
 
+            $via = $mail instanceof UnihubMailer && $mail->transportUsed !== '' ? ' (via ' . $mail->transportUsed . ')' : '';
+
             return [
                 'success' => true,
-                'message' => 'Email sent successfully.',
+                'message' => 'Email sent successfully' . $via . '.',
                 'error'   => null,
             ];
         } catch (PHPMailerException $e) {
