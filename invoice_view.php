@@ -253,6 +253,16 @@ $canVoid   = $status !== 'paid' && $status !== 'void';
         <div class="uh-party">
             <div class="uh-party-label">From</div>
             <div class="uh-party-name"><?= h($companyName) ?></div>
+            <?php
+                $bankAccName = $cfg['account_name'] ?? ($cfg['bank_account_name'] ?? '');
+                $bankAccNo   = $cfg['account_number'] ?? ($cfg['bank_account_number'] ?? '');
+            ?>
+            <div class="uh-party-detail">
+                <?php if (!empty($cfg['bank_name'])): ?><strong>Bank:</strong> <?= h($cfg['bank_name']) ?><br><?php endif; ?>
+                <?php if (!empty($cfg['bank_branch'])): ?><strong>Branch:</strong> <?= h($cfg['bank_branch']) ?><br><?php endif; ?>
+                <?php if ($bankAccName !== ''): ?><strong>Account Name:</strong> <?= h($bankAccName) ?><br><?php endif; ?>
+                <?php if ($bankAccNo !== ''): ?><strong>Account No:</strong> <?= h($bankAccNo) ?><?php endif; ?>
+            </div>
         </div>
         <div class="uh-party-divider"></div>
         <div class="uh-party">
@@ -338,13 +348,6 @@ $canVoid   = $status !== 'paid' && $status !== 'void';
     <div class="uh-payment">
         <div class="uh-section-label">Payment Instructions</div>
         <div class="uh-payment-detail">
-            <?php if (!empty($cfg['bank_name'])): ?>
-                <strong>Bank:</strong> <?= h($cfg['bank_name']) ?>
-                <?php if (!empty($cfg['bank_account_name'])): ?> . Account Name: <?= h($cfg['bank_account_name']) ?><?php endif; ?><br>
-            <?php endif; ?>
-            <?php if (!empty($cfg['bank_account_number'])): ?>
-                <strong>Account No:</strong> <?= h($cfg['bank_account_number']) ?><br>
-            <?php endif; ?>
             <?php if (!empty($cfg['payment_notes'])): ?>
                 <?= nl2br(h($cfg['payment_notes'])) ?>
             <?php else: ?>
