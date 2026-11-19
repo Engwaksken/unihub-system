@@ -94,6 +94,7 @@ include __DIR__ . '/includes/header.php';
             <option value="">All Types</option>
             <option value="invoice" <?= $typeFilter==='invoice'?'selected':'' ?>>Invoice</option>
             <option value="receipt" <?= $typeFilter==='receipt'?'selected':'' ?>>Receipt</option>
+            <option value="proforma" <?= $typeFilter==='proforma'?'selected':'' ?>>Proforma</option>
             <option value="reminder" <?= $typeFilter==='reminder'?'selected':'' ?>>Payment Reminder</option>
             <option value="other"   <?= $typeFilter==='other'  ?'selected':'' ?>>Other</option>
         </select>
@@ -169,6 +170,9 @@ include __DIR__ . '/includes/header.php';
                         <?php elseif ($row['email_type'] === 'receipt'): ?>
                             <a class="btn btn-ghost btn-sm" title="View receipt" aria-label="View receipt" href="receipt_view.php?id=<?= (int)$row['reference_id'] ?>"><i class="fas fa-eye"></i></a>
                             <button class="btn btn-primary btn-sm" title="Resend email" aria-label="Resend email" onclick="resendLog('receipt', <?= (int)$row['reference_id'] ?>)"><i class="fas fa-paper-plane"></i></button>
+                        <?php elseif ($row['email_type'] === 'proforma'): ?>
+                            <a class="btn btn-ghost btn-sm" title="View proforma" aria-label="View proforma" href="proforma_view.php?order_id=<?= (int)$row['reference_id'] ?>"><i class="fas fa-eye"></i></a>
+                            <button class="btn btn-primary btn-sm" title="Resend email" aria-label="Resend email" onclick="resendLog('proforma', <?= (int)$row['reference_id'] ?>)"><i class="fas fa-paper-plane"></i></button>
                         <?php else: ?>
                             <span class="users-never">—</span>
                         <?php endif; ?>
@@ -195,12 +199,13 @@ include __DIR__ . '/includes/header.php';
 
 <script>
 async function resendLog(type, logId) {
-    const endpoint = type === 'invoice' ? 'send_invoice.php' : 'send_receipt.php';
+    const endpoint = { invoice: 'send_invoice.php', proforma: 'send_proforma.php' }[type] || 'send_receipt.php';
+    const payload  = { invoice: { invoice_id: logId }, proforma: { order_id: logId } }[type] || { receipt_id: logId };
     try {
         const res  = await fetch(endpoint, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify(type === 'invoice' ? { invoice_id: logId } : { receipt_id: logId })
+            body: JSON.stringify(payload)
         });
         const data = await res.json();
         if (typeof showToast === 'function') {
