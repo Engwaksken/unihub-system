@@ -275,6 +275,9 @@ include 'includes/header.php';
                                 <?= htmlspecialchars($o['invoice_number']) ?>
                             </a>
                         <?php elseif (in_array($o['status'], ['pending', 'draft'], true)): ?>
+                            <a href="proforma_view.php?order_id=<?= (int)$o['id'] ?>" class="btn btn-outline btn-sm">
+                                <i class="fas fa-file-lines"></i> Proforma
+                            </a>
                             <button class="btn btn-primary btn-sm" onclick="generateInvoice(<?= (int)$o['id'] ?>)">
                                 <i class="fas fa-file-circle-plus"></i> Generate
                             </button>
@@ -287,6 +290,12 @@ include 'includes/header.php';
 
                     <td>
                         <div class="td-actions">
+                            <?php if (!in_array($o['status'], ['cancelled', 'pending', 'draft'], true)): ?>
+                                <a href="proforma_view.php?order_id=<?= (int)$o['id'] ?>" class="btn btn-outline btn-sm" title="Proforma invoice" aria-label="Proforma invoice">
+                                    <i class="fas fa-file-lines"></i>
+                                </a>
+                            <?php endif; ?>
+
                             <?php if (in_array($o['status'], ['pending', 'draft'], true)): ?>
                                 <button class="btn btn-ghost btn-sm" onclick="editOrder(<?= (int)$o['id'] ?>)" title="Edit">
                                     <i class="fas fa-edit"></i>
