@@ -1,5 +1,6 @@
 <?php
 require_once 'config/db.php';
+require_once __DIR__ . '/includes/proforma.php';
 
 $cfg = getSettings();
 $pdo = getDB();
@@ -22,55 +23,19 @@ if (!function_exists('moneyFmt')) {
 $orderId = (int)($_GET['order_id'] ?? 0);
 if ($orderId <= 0) { header('Location: orders.php'); exit; }
 
-$stmt = $pdo->prepare("
-    SELECT o.*,
-           c.name AS client_name, c.email AS client_email, c.phone AS client_phone,
-           c.address AS client_address, c.company AS client_company, c.tin AS client_tin,
-           (SELECT i.id FROM invoices i WHERE i.order_id = o.id ORDER BY i.id DESC LIMIT 1) AS invoice_id
-    FROM orders o
-    JOIN clients c ON c.id = o.client_id
-    WHERE o.id = ? LIMIT 1
-");
-$stmt->execute([$orderId]);
-$order = $stmt->fetch(PDO::FETCH_ASSOC);
-if (!$order) { header('Location: orders.php'); exit; }
+$pf = loadProforma($pdo, $cfg, $orderId);
+if (!$pf) { header('Location: orders.php'); exit; }
 
-$itemStmt = $pdo->prepare("
-    SELECT oi.*, s.name AS service_name
-    FROM order_items oi
-    LEFT JOIN services s ON s.id = oi.service_id
-    WHERE oi.order_id = ? ORDER BY oi.id ASC
-");
-$itemStmt->execute([$orderId]);
-$items = $itemStmt->fetchAll(PDO::FETCH_ASSOC);
-
-/* Totals: same formula as Order::generateInvoice() so the final invoice matches */
-$subtotal = 0.0;
-$taxTotal = 0.0;
-foreach ($items as $it) {
-    $line = (float)$it['quantity'] * (float)$it['unit_price'];
-    $subtotal += $line;
-    $taxTotal += $line * ((float)$it['tax_rate'] / 100);
-}
-$discount = ($order['discount_type'] ?? 'fixed') === 'percent'
-    ? $subtotal * ((float)$order['discount_value'] / 100)
-    : (float)$order['discount_value'];
-$total = $subtotal + $taxTotal - $discount;
-
-$proformaPrefix = trim((string)($cfg['proforma_prefix'] ?? '')) ?: 'PF';
-$proformaNumber = $proformaPrefix . '-' . $order['order_number'];
-$proformaDate   = $order['order_date'] ?: date('Y-m-d');
-$terms          = (int)($cfg['payment_terms'] ?? 0);
-$validUntil     = $order['due_date'] ?: date('Y-m-d', strtotime($proformaDate . ' +' . max($terms, 30) . ' days'));
-
-/* Signatory: the logged-in user's saved profile signature, if any */
-ensureUserSignatureProfile($pdo);
-$signatory = ['authorized_name' => '', 'profile_signature_data' => ''];
-if (!empty($_SESSION['user_id'])) {
-    $sigStmt = $pdo->prepare('SELECT authorized_name, profile_signature_data FROM users WHERE id = ? LIMIT 1');
-    $sigStmt->execute([(int)$_SESSION['user_id']]);
-    $signatory = $sigStmt->fetch(PDO::FETCH_ASSOC) ?: $signatory;
-}
+$order          = $pf['order'];
+$items          = $pf['items'];
+$subtotal       = $pf['subtotal'];
+$taxTotal       = $pf['tax_total'];
+$discount       = $pf['discount'];
+$total          = $pf['total'];
+$proformaNumber = $pf['number'];
+$proformaDate   = $pf['date'];
+$validUntil     = $pf['valid_until'];
+$signatory      = loadCurrentSignatory($pdo);
 
 $canConvert = empty($order['invoice_id']) && in_array($order['status'], ['pending', 'draft'], true);
 
@@ -89,6 +54,10 @@ $bankAccNo   = $cfg['account_number'] ?? ($cfg['bank_account_number'] ?? '');
 <div class="uh-actions no-print">
     <a href="orders.php" class="btn btn-ghost"><i class="fas fa-arrow-left"></i> Back to Orders</a>
     <button class="btn btn-outline" onclick="window.print()"><i class="fas fa-print"></i> Print / PDF</button>
+    <button class="btn btn-outline" onclick="sendProformaEmail(<?= (int)$orderId ?>, this)"
+            title="<?= !empty($order['client_email']) ? 'Send to ' . h($order['client_email']) : 'Client has no email address' ?>">
+        <i class="fas fa-paper-plane"></i> Send Email
+    </button>
     <?php if ($canConvert): ?>
         <button class="btn btn-primary" onclick="convertToInvoice(<?= (int)$orderId ?>)">
             <i class="fas fa-file-circle-plus"></i> Convert to Invoice
@@ -268,6 +237,23 @@ $bankAccNo   = $cfg['account_number'] ?? ($cfg['bank_account_number'] ?? '');
 </div><!-- /uh-paper -->
 
 <script>
+async function sendProformaEmail(orderId, btn) {
+    if (!await confirmModal('Email this proforma invoice (PDF attached) to the client?', {title:'Send proforma',confirmText:'Send',danger:false})) return;
+    const originalHtml = btn.innerHTML;
+    btn.disabled = true;
+    btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Sending...';
+    try {
+        const res = await api('send_proforma.php', { method:'POST', body: JSON.stringify({ order_id: orderId }) });
+        if (res.success) showToast(res.message || 'Proforma email sent');
+        else showToast(res.error || 'Failed to send proforma email', 'error');
+    } catch (err) {
+        showToast('Failed to send proforma email: invalid server response', 'error');
+    } finally {
+        btn.disabled = false;
+        btn.innerHTML = originalHtml;
+    }
+}
+
 async function convertToInvoice(orderId) {
     if (!await confirmModal('Convert this proforma into a final invoice? The order will be marked as invoiced.', {title:'Convert to invoice',confirmText:'Convert',danger:false})) return;
     const res = await api('orders.php', { method:'POST', body: JSON.stringify({ action:'generate_invoice', order_id: orderId }) });

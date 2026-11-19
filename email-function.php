@@ -365,7 +365,7 @@ if (!function_exists('sendEmailWithAttachment')) {
                 (email_type, reference_id, recipient_name, recipient_email, subject, status, attachment_path, sent_at, error_message)
                 VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)");
             $log->execute([
-                in_array($emailType, ['invoice', 'receipt'], true) ? $emailType : 'other',
+                in_array($emailType, ['invoice', 'receipt', 'proforma'], true) ? $emailType : 'other',
                 max(0, $referenceId), $toName ?: null, $to, $subject,
                 $sent ? 'sent' : 'failed', $attachmentPath ?: null,
                 $sent ? date('Y-m-d H:i:s') : null, $error,
